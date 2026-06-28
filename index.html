@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>指南针</title>
+    <title>专业指南针</title>
     <meta name="theme-color" content="#0a0a12" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="manifest" href="./manifest.json">
     <style>
-        /* ===== 全局重置 ===== */
+        /* --- 样式与之前一致，但精简了校准按钮 --- */
         * {
             margin: 0;
             padding: 0;
@@ -44,7 +43,6 @@
             box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
             overflow: hidden;
         }
-        /* ===== 顶部栏 ===== */
         .top-bar {
             position: absolute;
             top: 18px;
@@ -52,7 +50,7 @@
             right: 20px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             z-index: 10;
             pointer-events: none;
         }
@@ -62,7 +60,6 @@
             gap: 10px;
             background: rgba(255, 255, 255, 0.06);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             padding: 6px 14px 6px 10px;
             border-radius: 30px;
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -74,29 +71,27 @@
             background: #4ade80;
             flex-shrink: 0;
             transition: background 0.3s, box-shadow 0.3s;
-            box-shadow: 0 0 12px rgba(74, 222, 128, 0.3);
         }
         .level-dot.warning { background: #facc15; box-shadow: 0 0 12px rgba(250, 204, 21, 0.3); }
         .level-dot.danger { background: #f87171; box-shadow: 0 0 12px rgba(248, 113, 113, 0.3); }
+        .level-dot.stable { background: #4ade80; box-shadow: 0 0 12px rgba(74, 222, 128, 0.5); }
         .level-text {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 500;
-            letter-spacing: 0.5px;
             color: rgba(255, 255, 255, 0.85);
             font-variant-numeric: tabular-nums;
         }
-        .level-text span { font-size: 13px; color: rgba(255, 255, 255, 0.4); margin-left: 2px; }
+        .level-text span { font-size: 12px; color: rgba(255, 255, 255, 0.4); margin-left: 2px; }
         .status-badge {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.35);
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
             background: rgba(255, 255, 255, 0.04);
             padding: 4px 12px;
             border-radius: 20px;
             border: 1px solid rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(4px);
-            -webkit-backdrop-filter: blur(4px);
+            white-space: nowrap;
         }
-        /* ===== 罗盘 Canvas ===== */
         .compass-wrapper {
             position: relative;
             width: 80vw;
@@ -126,9 +121,8 @@
             font-size: clamp(36px, 10vw, 56px);
             font-weight: 700;
             color: #fff;
-            text-shadow: 0 0 30px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 0, 0, 0.4);
+            text-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
             letter-spacing: 1px;
-            font-variant-numeric: tabular-nums;
         }
         .angle-number .deg-symbol { font-size: 0.5em; font-weight: 300; color: rgba(255, 255, 255, 0.5); margin-left: 2px; }
         .angle-direction {
@@ -137,12 +131,10 @@
             color: rgba(255, 255, 255, 0.4);
             letter-spacing: 2px;
             margin-top: 2px;
-            text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
-        /* ===== 底部经纬度 ===== */
         .bottom-info {
             position: absolute;
-            bottom: 24px;
+            bottom: 70px;
             left: 20px;
             right: 20px;
             display: flex;
@@ -155,9 +147,36 @@
         }
         .coord-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
         .coord-label { font-size: 10px; font-weight: 400; color: rgba(255, 255, 255, 0.25); text-transform: uppercase; letter-spacing: 1.5px; }
-        .coord-value { font-size: 14px; font-weight: 500; color: rgba(255, 255, 255, 0.7); font-variant-numeric: tabular-nums; letter-spacing: 0.5px; }
-        .coord-value.loading { color: rgba(255, 255, 255, 0.2); font-weight: 300; font-size: 12px; }
-        /* ===== 启动 / 错误遮罩 ===== */
+        .coord-value { font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, 0.7); font-variant-numeric: tabular-nums; }
+
+        .calibration-toolbar {
+            position: absolute;
+            bottom: 16px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+        .calibration-toolbar button {
+            flex: 1;
+            padding: 10px 0;
+            border: none;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            letter-spacing: 0.5px;
+        }
+        .calibration-toolbar button:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.12); }
+        .calibration-toolbar .btn-accent { background: #8b5cf6; border-color: #8b5cf6; }
+        .calibration-toolbar .btn-accent:active { background: #7c3aed; }
+
         .sensor-prompt {
             position: absolute;
             top: 0;
@@ -170,7 +189,6 @@
             justify-content: center;
             background: rgba(10, 10, 18, 0.94);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             z-index: 50;
             padding: 40px;
             text-align: center;
@@ -189,59 +207,37 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
             box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
         }
         .sensor-prompt .btn-primary:active { background: #2563eb; transform: scale(0.96); }
-        .sensor-prompt .btn-secondary {
-            padding: 10px 28px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 30px;
-            background: transparent;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 12px;
-            transition: background 0.2s;
-        }
-        .sensor-prompt .btn-secondary:active { background: rgba(255, 255, 255, 0.05); }
         .sensor-prompt .error-detail { color: #f87171; font-size: 13px; margin-top: 12px; }
-        /* ===== 响应式 ===== */
         @media (max-width: 400px) {
             .top-bar { top: 12px; left: 14px; right: 14px; }
-            .level-indicator { padding: 4px 10px 4px 8px; }
-            .level-text { font-size: 13px; }
-            .bottom-info { bottom: 16px; left: 14px; right: 14px; }
-            .coord-value { font-size: 12px; }
-            .angle-number { font-size: clamp(28px, 8vw, 40px); }
+            .calibration-toolbar { bottom: 12px; left: 14px; right: 14px; }
+            .calibration-toolbar button { font-size: 11px; padding: 8px 0; }
+            .bottom-info { bottom: 60px; left: 14px; right: 14px; }
+            .coord-value { font-size: 11px; }
         }
         @media (max-height: 640px) {
             .compass-wrapper { max-width: 260px; }
-            .top-bar { top: 10px; }
-            .bottom-info { bottom: 12px; }
+            .bottom-info { bottom: 60px; }
+            .calibration-toolbar { bottom: 10px; }
         }
-        #compassCanvas { will-change: transform; }
-        .loading-shimmer { animation: shimmer 1.5s ease-in-out infinite; }
-        @keyframes shimmer { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.6; } }
-        ::-webkit-scrollbar { width: 0; height: 0; }
     </style>
 </head>
 <body>
 
-<div class="app-container" id="app">
+<div class="app-container">
 
-    <!-- ===== 顶部栏 ===== -->
     <div class="top-bar">
-        <div class="level-indicator" id="levelIndicator">
-            <div class="level-dot" id="levelDot"></div>
+        <div class="level-indicator">
+            <div class="level-dot stable" id="levelDot"></div>
             <div class="level-text" id="levelText">0<span>°</span></div>
         </div>
-        <div class="status-badge" id="statusBadge">● 待启动</div>
+        <div class="status-badge" id="statusBadge">● 等待启动</div>
     </div>
 
-    <!-- ===== 罗盘 ===== -->
-    <div class="compass-wrapper" id="compassWrapper">
+    <div class="compass-wrapper">
         <canvas id="compassCanvas"></canvas>
         <div class="angle-display">
             <div class="angle-number" id="angleNumber">--<span class="deg-symbol">°</span></div>
@@ -249,7 +245,6 @@
         </div>
     </div>
 
-    <!-- ===== 底部经纬度 ===== -->
     <div class="bottom-info">
         <div class="coord-item">
             <div class="coord-label">纬度</div>
@@ -261,16 +256,18 @@
         </div>
     </div>
 
-    <!-- ===== 启动 / 错误遮罩 ===== -->
+    <div class="calibration-toolbar">
+        <button class="btn-accent" id="calibrateBtn">🧲 画8字校准</button>
+        <!-- 移除了“设当前为北”按钮 -->
+    </div>
+
     <div class="sensor-prompt show" id="sensorPrompt">
         <div class="icon">🧭</div>
         <h3 id="promptTitle">启动指南针</h3>
         <p id="promptDesc">点击下方按钮，允许设备使用陀螺仪和磁力计</p>
         <button class="btn-primary" id="startBtn">启动指南针</button>
-        <button class="btn-secondary" id="retryBtn" style="display:none;">重试</button>
         <div class="error-detail" id="errorDetail"></div>
     </div>
-
 </div>
 
 <script>
@@ -288,31 +285,37 @@
     const lngValue = document.getElementById('lngValue');
     const sensorPrompt = document.getElementById('sensorPrompt');
     const startBtn = document.getElementById('startBtn');
-    const retryBtn = document.getElementById('retryBtn');
     const promptTitle = document.getElementById('promptTitle');
     const promptDesc = document.getElementById('promptDesc');
     const errorDetail = document.getElementById('errorDetail');
+    const calibrateBtn = document.getElementById('calibrateBtn');
 
     // ============================================================
     //  状态
     // ============================================================
-    let currentAlpha = 0, currentBeta = 0, currentGamma = 0;
-    let heading = 0;
+    let currentAlpha = 0,
+        currentBeta = 0,
+        currentGamma = 0;
     let hasOrientation = false;
-    let hasLocation = false;
     let isSensorStarted = false;
-    let startTimeout = null;
+    let canvasSize = 0,
+        dpr = 1;
+
+    // 平滑滤波 (指数移动平均)
+    let smoothedAlpha = null;
+    const ALPHA_SMOOTHING = 0.3; // 系数，越小越平滑，响应稍慢
+
+    // 稳定性检测
+    let alphaHistory = [];
+    const HISTORY_SIZE = 12;
+
     const DIR_NAMES = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
-    // 尺寸
-    let canvasSize = 0;
-    let dpr = 1;
-
     // ============================================================
-    //  Canvas 尺寸管理
+    //  Canvas 绘制 (同上)
     // ============================================================
     function resizeCanvas() {
-        const wrapper = document.getElementById('compassWrapper');
+        const wrapper = document.querySelector('.compass-wrapper');
         const rect = wrapper.getBoundingClientRect();
         const size = rect.width;
         dpr = window.devicePixelRatio || 1;
@@ -325,13 +328,12 @@
         drawCompass(0);
     }
 
-    // ============================================================
-    //  绘制罗盘 (与之前相同，略作精简)
-    // ============================================================
     function drawCompass(rotation) {
         const size = canvasSize;
         if (size === 0) return;
-        const cx = size / 2, cy = size / 2, radius = size / 2 - 6;
+        const cx = size / 2,
+            cy = size / 2,
+            radius = size / 2 - 6;
         ctx.clearRect(0, 0, size, size);
 
         // 外圈
@@ -349,17 +351,24 @@
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // 刻度
         for (let i = 0; i < 360; i++) {
             const angleRad = (i - 90) * Math.PI / 180;
-            const isLong = i % 30 === 0, isMid = i % 5 === 0;
+            const isLong = i % 30 === 0,
+                isMid = i % 5 === 0;
             let tickLen, lineWidth, color;
-            if (isLong) { tickLen = radius * 0.14; lineWidth = 2.5; color = 'rgba(255,255,255,0.9)'; }
-            else if (isMid) { tickLen = radius * 0.09; lineWidth = 1.8; color = 'rgba(255,255,255,0.5)'; }
-            else { tickLen = radius * 0.05; lineWidth = 1; color = 'rgba(255,255,255,0.2)'; }
-            const startR = radius - tickLen, endR = radius;
-            const x1 = cx + startR * Math.cos(angleRad), y1 = cy + startR * Math.sin(angleRad);
-            const x2 = cx + endR * Math.cos(angleRad), y2 = cy + endR * Math.sin(angleRad);
+            if (isLong) { tickLen = radius * 0.14;
+                lineWidth = 2.5;
+                color = 'rgba(255,255,255,0.9)'; } else if (isMid) { tickLen = radius * 0.09;
+                lineWidth = 1.8;
+                color = 'rgba(255,255,255,0.5)'; } else { tickLen = radius * 0.05;
+                lineWidth = 1;
+                color = 'rgba(255,255,255,0.2)'; }
+            const startR = radius - tickLen,
+                endR = radius;
+            const x1 = cx + startR * Math.cos(angleRad),
+                y1 = cy + startR * Math.sin(angleRad);
+            const x2 = cx + endR * Math.cos(angleRad),
+                y2 = cy + endR * Math.sin(angleRad);
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
@@ -368,7 +377,6 @@
             ctx.stroke();
         }
 
-        // 方向字母
         const dirs = [
             { label: 'N', angle: 0, color: '#ff3b3b' },
             { label: 'E', angle: 90, color: 'rgba(255,255,255,0.7)' },
@@ -381,7 +389,8 @@
         dirs.forEach(d => {
             const rad = (d.angle - 90) * Math.PI / 180;
             const r = radius * 0.78;
-            const x = cx + r * Math.cos(rad), y = cy + r * Math.sin(rad);
+            const x = cx + r * Math.cos(rad),
+                y = cy + r * Math.sin(rad);
             ctx.font = `600 ${fontSize}px -apple-system, "Helvetica Neue", sans-serif`;
             ctx.fillStyle = d.color;
             ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -390,8 +399,8 @@
             ctx.shadowBlur = 0;
         });
 
-        // 次要方向
-        const subDirs = [{ label: 'NE', angle: 45 }, { label: 'SE', angle: 135 }, { label: 'SW', angle: 225 }, { label: 'NW', angle: 315 }];
+        const subDirs = [{ label: 'NE', angle: 45 }, { label: 'SE', angle: 135 }, { label: 'SW', angle: 225 }, { label: 'NW',
+                angle: 315 }];
         const subFontSize = radius * 0.075;
         ctx.font = `400 ${subFontSize}px -apple-system, "Helvetica Neue", sans-serif`;
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
@@ -401,7 +410,6 @@
             ctx.fillText(d.label, cx + r * Math.cos(rad), cy + r * Math.sin(rad) + 1);
         });
 
-        // 内圈
         ctx.beginPath();
         ctx.arc(cx, cy, radius * 0.65, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255,255,255,0.04)';
@@ -413,7 +421,7 @@
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // 红色指针
+        // 指针
         const pointerLen = radius * 0.35;
         const pointerBase = radius * 0.12;
         ctx.save();
@@ -452,7 +460,6 @@
         ctx.fill();
         ctx.restore();
 
-        // N 标记
         const nRad = (-90) * Math.PI / 180;
         const nR = radius - 2;
         ctx.beginPath();
@@ -465,39 +472,74 @@
     }
 
     // ============================================================
-    //  更新显示
+    //  平滑 & 更新显示
     // ============================================================
-    function updateDisplay(alpha, beta, gamma) {
-        heading = alpha;
-        const rotation = (360 - alpha) % 360;
+    function updateDisplay(rawAlpha, beta, gamma) {
+        // 平滑处理角度 (处理 0/360 跳变)
+        let alpha = rawAlpha;
+        if (smoothedAlpha === null) {
+            smoothedAlpha = alpha;
+        } else {
+            // 计算最短路径差值
+            let diff = alpha - smoothedAlpha;
+            if (diff > 180) diff -= 360;
+            else if (diff < -180) diff += 360;
+            smoothedAlpha += diff * ALPHA_SMOOTHING;
+            // 归一化
+            smoothedAlpha = ((smoothedAlpha % 360) + 360) % 360;
+        }
+        const displayAlpha = smoothedAlpha;
+
+        // 绘制罗盘 (旋转角度)
+        const rotation = (360 - displayAlpha) % 360;
         drawCompass(rotation);
 
-        const displayAngle = Math.round(alpha) % 360;
+        // 数字显示
+        const displayAngle = Math.round(displayAlpha) % 360;
         angleNumber.innerHTML = `${displayAngle}<span class="deg-symbol">°</span>`;
-        const dirIndex = Math.round(((alpha % 360) / 45)) % 8;
+        const dirIndex = Math.round(((displayAlpha % 360) / 45)) % 8;
         angleDirection.textContent = DIR_NAMES[dirIndex] || '-';
 
+        // 水平仪
         const tilt = Math.sqrt(beta * beta + gamma * gamma);
         const tiltDeg = tilt.toFixed(1);
         levelText.innerHTML = `${tiltDeg}<span>°</span>`;
-        const dot = document.getElementById('levelDot');
-        if (tilt < 3) { dot.className = 'level-dot'; dot.style.background = '#4ade80'; dot.style.boxShadow = '0 0 12px rgba(74,222,128,0.3)'; }
-        else if (tilt < 8) { dot.className = 'level-dot warning'; dot.style.background = '#facc15'; dot.style.boxShadow = '0 0 12px rgba(250,204,21,0.3)'; }
-        else { dot.className = 'level-dot danger'; dot.style.background = '#f87171'; dot.style.boxShadow = '0 0 12px rgba(248,113,113,0.3)'; }
 
-        if (statusBadge.textContent.includes('待启动')) {
-            statusBadge.textContent = '● 已校准';
-            statusBadge.style.color = 'rgba(255,255,255,0.4)';
+        // 稳定性检测 (基于原始alpha, 因为平滑后变化小)
+        alphaHistory.push(rawAlpha);
+        if (alphaHistory.length > HISTORY_SIZE) alphaHistory.shift();
+        if (alphaHistory.length > 5) {
+            const avg = alphaHistory.reduce((a, b) => a + b, 0) / alphaHistory.length;
+            const variance = alphaHistory.reduce((a, b) => a + (b - avg) * (b - avg), 0) / alphaHistory.length;
+            const isStable = variance < 1.5;
+            if (isStable) {
+                statusBadge.textContent = '● 稳定';
+                statusBadge.style.color = '#4ade80';
+                levelDot.className = 'level-dot stable';
+            } else {
+                statusBadge.textContent = '● 移动中 (请画8字)';
+                statusBadge.style.color = '#facc15';
+                levelDot.className = 'level-dot warning';
+            }
+        } else {
+            statusBadge.textContent = '● 初始化...';
+        }
+
+        // 如果倾斜过大，提示
+        if (tilt > 15) {
+            statusBadge.textContent = '⚠️ 请平放手机';
+            statusBadge.style.color = '#f87171';
         }
     }
 
     // ============================================================
-    //  传感器处理
+    //  传感器事件
     // ============================================================
     function handleOrientation(event) {
         let alpha = event.alpha || 0;
         let beta = event.beta || 0;
         let gamma = event.gamma || 0;
+        // iOS 使用 webkitCompassHeading (已校正地理北)
         if (typeof event.webkitCompassHeading === 'number') {
             alpha = event.webkitCompassHeading;
         }
@@ -511,9 +553,6 @@
         if (!hasOrientation) {
             hasOrientation = true;
             sensorPrompt.classList.remove('show');
-            statusBadge.textContent = '● 已校准';
-            statusBadge.style.color = 'rgba(255,255,255,0.4)';
-            clearTimeout(startTimeout);
         }
         updateDisplay(alpha, beta, gamma);
     }
@@ -521,29 +560,25 @@
     function onSensorError(e) {
         console.warn('Sensor error:', e);
         if (!hasOrientation) {
-            clearTimeout(startTimeout);
-            showError('传感器启动失败，请检查设备是否支持或重启浏览器');
+            showError('传感器启动失败，请检查 HTTPS 或重启浏览器');
         }
     }
 
     // ============================================================
-    //  地理位置
+    //  地理位置 (不变)
     // ============================================================
     function getLocation() {
-        if (!navigator.geolocation) {
-            latValue.textContent = '不支持';
-            lngValue.textContent = '不支持';
-            return;
-        }
+        if (!navigator.geolocation) { latValue.textContent = '不支持';
+            lngValue.textContent = '不支持'; return; }
         navigator.geolocation.getCurrentPosition(
             (pos) => {
-                const lat = pos.coords.latitude, lng = pos.coords.longitude;
-                hasLocation = true;
+                const lat = pos.coords.latitude,
+                    lng = pos.coords.longitude;
                 latValue.textContent = formatCoord(lat, 'lat');
                 lngValue.textContent = formatCoord(lng, 'lng');
             },
-            () => { latValue.textContent = '--°--\'--"'; lngValue.textContent = '--°--\'--"'; },
-            { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+            () => { latValue.textContent = '--°--\'--"';
+                lngValue.textContent = '--°--\'--"'; }, { enableHighAccuracy: true, timeout: 8000 }
         );
     }
 
@@ -557,7 +592,26 @@
     }
 
     // ============================================================
-    //  启动指南针 (用户手势触发)
+    //  校准功能 (仅硬件校准提示)
+    // ============================================================
+    function promptFigureEight() {
+        if (!hasOrientation) {
+            alert('请先启动指南针');
+            return;
+        }
+        statusBadge.textContent = '🧲 请画 ∞ 字移动手机...';
+        statusBadge.style.color = '#facc15';
+        alphaHistory = []; // 重置历史，重新检测稳定性
+        setTimeout(() => {
+            if (alphaHistory.length > 5) {
+                // 稳定性会由 updateDisplay 自动更新
+            }
+        }, 4000);
+        if (navigator.vibrate) navigator.vibrate(10);
+    }
+
+    // ============================================================
+    //  启动逻辑
     // ============================================================
     function startCompass() {
         if (isSensorStarted) return;
@@ -566,23 +620,18 @@
         startBtn.textContent = '启动中...';
         errorDetail.textContent = '';
 
-        // 检查是否支持
         if (!window.DeviceOrientationEvent) {
-            showError('您的设备不支持陀螺仪或磁力计');
-            startBtn.disabled = false;
-            startBtn.textContent = '启动指南针';
+            showError('设备不支持陀螺仪');
             return;
         }
 
-        // iOS 13+ 需要请求权限
-        if (typeof DeviceOrientationEvent !== 'undefined' &&
-            typeof DeviceOrientationEvent.requestPermission === 'function') {
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
             DeviceOrientationEvent.requestPermission()
                 .then(response => {
                     if (response === 'granted') {
-                        initSensorListener();
+                        initListener();
                     } else {
-                        showError('权限被拒绝，请在系统设置中允许');
+                        showError('权限被拒绝，请在设置中允许');
                         startBtn.disabled = false;
                         startBtn.textContent = '启动指南针';
                     }
@@ -593,12 +642,10 @@
                     startBtn.textContent = '启动指南针';
                 });
         } else {
-            // Android 或其它，直接监听
-            initSensorListener();
-            // 设置超时，若5秒无数据则提示
-            startTimeout = setTimeout(() => {
+            initListener();
+            setTimeout(() => {
                 if (!hasOrientation) {
-                    showError('传感器无响应，请确认页面使用 HTTPS 且设备支持');
+                    showError('传感器无响应，请确认页面使用 HTTPS');
                     startBtn.disabled = false;
                     startBtn.textContent = '启动指南针';
                 }
@@ -606,54 +653,26 @@
         }
     }
 
-    function initSensorListener() {
-        // 移除旧监听避免重复
+    function initListener() {
         window.removeEventListener('deviceorientation', handleOrientation);
-        window.removeEventListener('deviceorientationerror', onSensorError);
         window.addEventListener('deviceorientation', handleOrientation, true);
         window.addEventListener('deviceorientationerror', onSensorError, true);
-        // 启动位置
         getLocation();
-        // 隐藏遮罩（如果已获得数据，会在回调中隐藏）
-        // 若已获得数据则隐藏，否则保持显示
-        if (!hasOrientation) {
-            // 但遮罩仍然显示，等待数据
-        }
-        // 更新提示
-        promptTitle.textContent = '等待传感器数据...';
-        promptDesc.textContent = '请将设备平放并缓慢旋转，等待校准';
+        promptTitle.textContent = '等待数据...';
+        promptDesc.textContent = '请平放手机并缓慢旋转';
         startBtn.style.display = 'none';
-        retryBtn.style.display = 'inline-block';
-        retryBtn.textContent = '重新尝试';
-        retryBtn.onclick = () => {
-            // 重置状态
-            hasOrientation = false;
-            isSensorStarted = false;
-            window.removeEventListener('deviceorientation', handleOrientation);
-            window.removeEventListener('deviceorientationerror', onSensorError);
-            startBtn.disabled = false;
-            startBtn.textContent = '启动指南针';
-            startBtn.style.display = 'inline-block';
-            retryBtn.style.display = 'none';
-            promptTitle.textContent = '启动指南针';
-            promptDesc.textContent = '点击下方按钮，允许设备使用陀螺仪和磁力计';
-            errorDetail.textContent = '';
-            sensorPrompt.classList.add('show');
-        };
     }
 
     function showError(msg) {
         errorDetail.textContent = msg;
         promptTitle.textContent = '启动失败';
-        promptDesc.textContent = '请尝试以下操作：';
         startBtn.textContent = '重试';
         startBtn.disabled = false;
-        retryBtn.style.display = 'none';
         startBtn.style.display = 'inline-block';
         startBtn.onclick = () => {
             errorDetail.textContent = '';
             promptTitle.textContent = '启动指南针';
-            promptDesc.textContent = '点击下方按钮，允许设备使用陀螺仪和磁力计';
+            promptDesc.textContent = '点击下方按钮，允许设备使用陀螺仪';
             startBtn.textContent = '启动指南针';
             startBtn.onclick = startCompass;
             isSensorStarted = false;
@@ -662,82 +681,30 @@
     }
 
     // ============================================================
-    //  窗口事件
-    // ============================================================
-    let resizeTimeout = null;
-
-    function handleResize() {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            resizeCanvas();
-            if (hasOrientation) {
-                drawCompass((360 - currentAlpha) % 360);
-            } else {
-                drawCompass(0);
-            }
-        }, 100);
-    }
-
-    // ============================================================
     //  初始化
     // ============================================================
     function init() {
         resizeCanvas();
         drawCompass(0);
-        statusBadge.textContent = '● 待启动';
-
-        // 显示启动遮罩
         sensorPrompt.classList.add('show');
-        promptTitle.textContent = '启动指南针';
-        promptDesc.textContent = '点击下方按钮，允许设备使用陀螺仪和磁力计';
-        startBtn.textContent = '启动指南针';
-        startBtn.style.display = 'inline-block';
-        retryBtn.style.display = 'none';
-        errorDetail.textContent = '';
         startBtn.onclick = startCompass;
+        calibrateBtn.onclick = promptFigureEight;
 
-        window.addEventListener('resize', handleResize);
-        window.addEventListener('orientationchange', () => setTimeout(handleResize, 300));
-
-        // 动态创建 PWA manifest (简化)
-        const manifest = {
-            name: '指南针',
-            short_name: '指南针',
-            start_url: location.href,
-            display: 'standalone',
-            background_color: '#0a0a12',
-            theme_color: '#0a0a12',
-            icons: [
-                { src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="%230a0a12"/><path d="M50 10 L55 45 L90 50 L55 55 L50 90 L45 55 L10 50 L45 45 Z" fill="%23ff1744"/></svg>', sizes: '192x192', type: 'image/svg+xml' }
-            ]
-        };
-        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-        const link = document.createElement('link');
-        link.rel = 'manifest';
-        link.href = URL.createObjectURL(blob);
-        document.head.appendChild(link);
+        window.addEventListener('resize', () => { resizeCanvas(); });
+        window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 300));
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) getLocation(); });
     }
 
-    // 页面加载后启动
-    if (document.readyState === 'complete') {
-        init();
-    } else {
-        window.addEventListener('load', init);
-    }
-
-    // 页面可见性变化时刷新位置
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && hasOrientation) {
-            getLocation();
-        }
-    });
-
-    console.log('🧭 指南针 PWA 已加载 (点击启动)');
+    if (document.readyState === 'complete') init();
+    else window.addEventListener('load', init);
 </script>
 <script>
-  // 可选 Service Worker (文件缺失不影响使用)
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW 未注册'));
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      console.log('Service Worker 注册成功，作用域:', reg.scope);
+    }).catch(err => {
+      console.error('Service Worker 注册失败:', err);
+    });
   }
 </script>
 </body>
