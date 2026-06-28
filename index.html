@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>专业指南针</title>
+    <title>指南针</title>
     <meta name="theme-color" content="#0a0a12" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <link rel="manifest" href="./manifest.json">
+    <link rel="manifest" href="manifest.json" />
     <style>
-        /* --- 样式与之前一致，但精简了校准按钮 --- */
+        /* ===== 全局重置（保持不变） ===== */
         * {
             margin: 0;
             padding: 0;
@@ -174,6 +174,8 @@
             letter-spacing: 0.5px;
         }
         .calibration-toolbar button:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.12); }
+        .calibration-toolbar .btn-primary { background: #3b82f6; border-color: #3b82f6; }
+        .calibration-toolbar .btn-primary:active { background: #2563eb; }
         .calibration-toolbar .btn-accent { background: #8b5cf6; border-color: #8b5cf6; }
         .calibration-toolbar .btn-accent:active { background: #7c3aed; }
 
@@ -229,6 +231,7 @@
 
 <div class="app-container">
 
+    <!-- 顶部栏 -->
     <div class="top-bar">
         <div class="level-indicator">
             <div class="level-dot stable" id="levelDot"></div>
@@ -237,6 +240,7 @@
         <div class="status-badge" id="statusBadge">● 等待启动</div>
     </div>
 
+    <!-- 罗盘 -->
     <div class="compass-wrapper">
         <canvas id="compassCanvas"></canvas>
         <div class="angle-display">
@@ -245,6 +249,7 @@
         </div>
     </div>
 
+    <!-- 经纬度 -->
     <div class="bottom-info">
         <div class="coord-item">
             <div class="coord-label">纬度</div>
@@ -256,11 +261,13 @@
         </div>
     </div>
 
+    <!-- 校准工具栏 -->
     <div class="calibration-toolbar">
         <button class="btn-accent" id="calibrateBtn">🧲 画8字校准</button>
-        <!-- 移除了“设当前为北”按钮 -->
+        <button class="btn-primary" id="setNorthBtn">⬆ 设当前为北</button>
     </div>
 
+    <!-- 启动遮罩 -->
     <div class="sensor-prompt show" id="sensorPrompt">
         <div class="icon">🧭</div>
         <h3 id="promptTitle">启动指南针</h3>
@@ -289,6 +296,7 @@
     const promptDesc = document.getElementById('promptDesc');
     const errorDetail = document.getElementById('errorDetail');
     const calibrateBtn = document.getElementById('calibrateBtn');
+    const setNorthBtn = document.getElementById('setNorthBtn');
 
     // ============================================================
     //  状态
@@ -301,9 +309,12 @@
     let canvasSize = 0,
         dpr = 1;
 
-    // 平滑滤波 (指数移动平均)
+    // 用户偏移补偿
+    let userOffset = 0;
+
+    // 平滑滤波 (使用简单 EMA)
     let smoothedAlpha = null;
-    const ALPHA_SMOOTHING = 0.3; // 系数，越小越平滑，响应稍慢
+    const SMOOTH_FACTOR = 0.25;
 
     // 稳定性检测
     let alphaHistory = [];
@@ -312,7 +323,7 @@
     const DIR_NAMES = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
     // ============================================================
-    //  Canvas 绘制 (同上)
+    //  Canvas 尺寸管理
     // ============================================================
     function resizeCanvas() {
         const wrapper = document.querySelector('.compass-wrapper');
@@ -328,7 +339,10 @@
         drawCompass(0);
     }
 
-    function drawCompass(rotation) {
+    // ============================================================
+    //  绘制罗盘 (核心绘图) —— 修复版
+    // ============================================================
+    function drawCompass(alpha) {
         const size = canvasSize;
         if (size === 0) return;
         const cx = size / 2,
@@ -336,7 +350,7 @@
             radius = size / 2 - 6;
         ctx.clearRect(0, 0, size, size);
 
-        // 外圈
+        // ---------- 外圈光晕 (不旋转) ----------
         const grad = ctx.createRadialGradient(cx, cy, radius * 0.92, cx, cy, radius);
         grad.addColorStop(0, 'rgba(30, 30, 60, 0)');
         grad.addColorStop(0.85, 'rgba(30, 30, 60, 0.1)');
@@ -351,6 +365,12 @@
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
+        // ---------- 绘制刻度盘 (旋转使 N 指向地理北) ----------
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-alpha * Math.PI / 180); // 逆时针旋转 alpha 度，使 N 指向北方
+
+        // 刻度
         for (let i = 0; i < 360; i++) {
             const angleRad = (i - 90) * Math.PI / 180;
             const isLong = i % 30 === 0,
@@ -365,10 +385,10 @@
                 color = 'rgba(255,255,255,0.2)'; }
             const startR = radius - tickLen,
                 endR = radius;
-            const x1 = cx + startR * Math.cos(angleRad),
-                y1 = cy + startR * Math.sin(angleRad);
-            const x2 = cx + endR * Math.cos(angleRad),
-                y2 = cy + endR * Math.sin(angleRad);
+            const x1 = startR * Math.cos(angleRad),
+                y1 = startR * Math.sin(angleRad);
+            const x2 = endR * Math.cos(angleRad),
+                y2 = endR * Math.sin(angleRad);
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
@@ -377,6 +397,7 @@
             ctx.stroke();
         }
 
+        // 主方向字母
         const dirs = [
             { label: 'N', angle: 0, color: '#ff3b3b' },
             { label: 'E', angle: 90, color: 'rgba(255,255,255,0.7)' },
@@ -389,8 +410,8 @@
         dirs.forEach(d => {
             const rad = (d.angle - 90) * Math.PI / 180;
             const r = radius * 0.78;
-            const x = cx + r * Math.cos(rad),
-                y = cy + r * Math.sin(rad);
+            const x = r * Math.cos(rad),
+                y = r * Math.sin(rad);
             ctx.font = `600 ${fontSize}px -apple-system, "Helvetica Neue", sans-serif`;
             ctx.fillStyle = d.color;
             ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -399,6 +420,7 @@
             ctx.shadowBlur = 0;
         });
 
+        // 次要方向
         const subDirs = [{ label: 'NE', angle: 45 }, { label: 'SE', angle: 135 }, { label: 'SW', angle: 225 }, { label: 'NW',
                 angle: 315 }];
         const subFontSize = radius * 0.075;
@@ -407,26 +429,28 @@
         subDirs.forEach(d => {
             const rad = (d.angle - 90) * Math.PI / 180;
             const r = radius * 0.88;
-            ctx.fillText(d.label, cx + r * Math.cos(rad), cy + r * Math.sin(rad) + 1);
+            ctx.fillText(d.label, r * Math.cos(rad), r * Math.sin(rad) + 1);
         });
 
+        // 内圈装饰
         ctx.beginPath();
-        ctx.arc(cx, cy, radius * 0.65, 0, Math.PI * 2);
+        ctx.arc(0, 0, radius * 0.65, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255,255,255,0.04)';
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(cx, cy, radius * 0.42, 0, Math.PI * 2);
+        ctx.arc(0, 0, radius * 0.42, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255,255,255,0.03)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // 指针
+        ctx.restore(); // 恢复坐标系
+
+        // ---------- 绘制固定指针 (始终指向设备顶部，即画布上方) ----------
         const pointerLen = radius * 0.35;
         const pointerBase = radius * 0.12;
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(-rotation * Math.PI / 180);
         ctx.beginPath();
         ctx.moveTo(0, -pointerLen);
         ctx.lineTo(-pointerBase * 0.5, -pointerLen * 0.25);
@@ -447,6 +471,7 @@
         ctx.strokeStyle = 'rgba(255,255,255,0.15)';
         ctx.lineWidth = 0.8;
         ctx.stroke();
+        // 中心圆
         ctx.beginPath();
         ctx.arc(0, 0, radius * 0.045, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
@@ -459,40 +484,30 @@
         ctx.shadowBlur = 0;
         ctx.fill();
         ctx.restore();
-
-        const nRad = (-90) * Math.PI / 180;
-        const nR = radius - 2;
-        ctx.beginPath();
-        ctx.arc(cx + nR * Math.cos(nRad), cy + nR * Math.sin(nRad), 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 59, 59, 0.6)';
-        ctx.shadowColor = 'rgba(255, 59, 59, 0.3)';
-        ctx.shadowBlur = 15;
-        ctx.fill();
-        ctx.shadowBlur = 0;
     }
 
     // ============================================================
-    //  平滑 & 更新显示
+    //  更新显示 (含偏移、平滑、稳定性)
     // ============================================================
     function updateDisplay(rawAlpha, beta, gamma) {
-        // 平滑处理角度 (处理 0/360 跳变)
-        let alpha = rawAlpha;
+        // 应用用户偏移
+        let corrected = (rawAlpha + userOffset) % 360;
+        if (corrected < 0) corrected += 360;
+
+        // 平滑处理
         if (smoothedAlpha === null) {
-            smoothedAlpha = alpha;
+            smoothedAlpha = corrected;
         } else {
-            // 计算最短路径差值
-            let diff = alpha - smoothedAlpha;
+            let diff = corrected - smoothedAlpha;
             if (diff > 180) diff -= 360;
             else if (diff < -180) diff += 360;
-            smoothedAlpha += diff * ALPHA_SMOOTHING;
-            // 归一化
+            smoothedAlpha += diff * SMOOTH_FACTOR;
             smoothedAlpha = ((smoothedAlpha % 360) + 360) % 360;
         }
         const displayAlpha = smoothedAlpha;
 
-        // 绘制罗盘 (旋转角度)
-        const rotation = (360 - displayAlpha) % 360;
-        drawCompass(rotation);
+        // 绘制罗盘：传入 displayAlpha（方位角），内部会旋转刻度盘使 N 指北
+        drawCompass(displayAlpha);
 
         // 数字显示
         const displayAngle = Math.round(displayAlpha) % 360;
@@ -502,50 +517,51 @@
 
         // 水平仪
         const tilt = Math.sqrt(beta * beta + gamma * gamma);
-        const tiltDeg = tilt.toFixed(1);
-        levelText.innerHTML = `${tiltDeg}<span>°</span>`;
+        levelText.innerHTML = `${tilt.toFixed(1)}<span>°</span>`;
+        if (tilt < 3) {
+            levelDot.className = 'level-dot stable';
+        } else if (tilt < 10) {
+            levelDot.className = 'level-dot warning';
+        } else {
+            levelDot.className = 'level-dot danger';
+        }
 
-        // 稳定性检测 (基于原始alpha, 因为平滑后变化小)
+        // 稳定性检测 (基于原始 alpha)
         alphaHistory.push(rawAlpha);
         if (alphaHistory.length > HISTORY_SIZE) alphaHistory.shift();
         if (alphaHistory.length > 5) {
             const avg = alphaHistory.reduce((a, b) => a + b, 0) / alphaHistory.length;
             const variance = alphaHistory.reduce((a, b) => a + (b - avg) * (b - avg), 0) / alphaHistory.length;
-            const isStable = variance < 1.5;
+            const isStable = variance < 2.0;
             if (isStable) {
                 statusBadge.textContent = '● 稳定';
                 statusBadge.style.color = '#4ade80';
-                levelDot.className = 'level-dot stable';
             } else {
                 statusBadge.textContent = '● 移动中 (请画8字)';
                 statusBadge.style.color = '#facc15';
-                levelDot.className = 'level-dot warning';
             }
         } else {
             statusBadge.textContent = '● 初始化...';
         }
-
-        // 如果倾斜过大，提示
-        if (tilt > 15) {
-            statusBadge.textContent = '⚠️ 请平放手机';
-            statusBadge.style.color = '#f87171';
-        }
     }
 
     // ============================================================
-    //  传感器事件
+    //  传感器事件处理
     // ============================================================
     function handleOrientation(event) {
         let alpha = event.alpha || 0;
         let beta = event.beta || 0;
         let gamma = event.gamma || 0;
-        // iOS 使用 webkitCompassHeading (已校正地理北)
+
+        // iOS 使用 webkitCompassHeading
         if (typeof event.webkitCompassHeading === 'number') {
             alpha = event.webkitCompassHeading;
         }
+
         alpha = ((alpha % 360) + 360) % 360;
         beta = Math.max(-90, Math.min(90, beta));
         gamma = Math.max(-90, Math.min(90, gamma));
+
         currentAlpha = alpha;
         currentBeta = beta;
         currentGamma = gamma;
@@ -553,8 +569,15 @@
         if (!hasOrientation) {
             hasOrientation = true;
             sensorPrompt.classList.remove('show');
+            statusBadge.textContent = '● 已连接';
+            // 初始化平滑值
+            smoothedAlpha = alpha;
         }
+
         updateDisplay(alpha, beta, gamma);
+
+        // 调试日志 (可取消注释查看)
+        // console.log('alpha:', alpha.toFixed(1), 'beta:', beta.toFixed(1), 'gamma:', gamma.toFixed(1));
     }
 
     function onSensorError(e) {
@@ -565,11 +588,14 @@
     }
 
     // ============================================================
-    //  地理位置 (不变)
+    //  地理位置
     // ============================================================
     function getLocation() {
-        if (!navigator.geolocation) { latValue.textContent = '不支持';
-            lngValue.textContent = '不支持'; return; }
+        if (!navigator.geolocation) {
+            latValue.textContent = '不支持';
+            lngValue.textContent = '不支持';
+            return;
+        }
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const lat = pos.coords.latitude,
@@ -577,8 +603,10 @@
                 latValue.textContent = formatCoord(lat, 'lat');
                 lngValue.textContent = formatCoord(lng, 'lng');
             },
-            () => { latValue.textContent = '--°--\'--"';
-                lngValue.textContent = '--°--\'--"'; }, { enableHighAccuracy: true, timeout: 8000 }
+            () => {
+                latValue.textContent = '--°--\'--"';
+                lngValue.textContent = '--°--\'--"';
+            }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
         );
     }
 
@@ -592,8 +620,27 @@
     }
 
     // ============================================================
-    //  校准功能 (仅硬件校准提示)
+    //  校准功能
     // ============================================================
+    function setCurrentAsNorth() {
+        if (!hasOrientation) {
+            alert('请等待指南针数据稳定后再操作');
+            return;
+        }
+        const newOffset = (360 - currentAlpha) % 360;
+        userOffset = newOffset;
+        smoothedAlpha = 0; // 重置平滑值
+        updateDisplay(currentAlpha, currentBeta, currentGamma);
+        if (navigator.vibrate) navigator.vibrate(20);
+        statusBadge.textContent = '● 已校准偏移: ' + Math.round(newOffset) + '°';
+        setTimeout(() => {
+            if (statusBadge.textContent.includes('校准偏移')) {
+                statusBadge.textContent = '● 稳定';
+                statusBadge.style.color = '#4ade80';
+            }
+        }, 1500);
+    }
+
     function promptFigureEight() {
         if (!hasOrientation) {
             alert('请先启动指南针');
@@ -601,12 +648,8 @@
         }
         statusBadge.textContent = '🧲 请画 ∞ 字移动手机...';
         statusBadge.style.color = '#facc15';
-        alphaHistory = []; // 重置历史，重新检测稳定性
-        setTimeout(() => {
-            if (alphaHistory.length > 5) {
-                // 稳定性会由 updateDisplay 自动更新
-            }
-        }, 4000);
+        alphaHistory = [];
+        setTimeout(() => {}, 4000);
         if (navigator.vibrate) navigator.vibrate(10);
     }
 
@@ -689,23 +732,27 @@
         sensorPrompt.classList.add('show');
         startBtn.onclick = startCompass;
         calibrateBtn.onclick = promptFigureEight;
+        setNorthBtn.onclick = setCurrentAsNorth;
 
         window.addEventListener('resize', () => { resizeCanvas(); });
         window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 300));
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) getLocation(); });
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) getLocation();
+        });
     }
 
     if (document.readyState === 'complete') init();
     else window.addEventListener('load', init);
 </script>
+
 <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').then(reg => {
-      console.log('Service Worker 注册成功，作用域:', reg.scope);
-    }).catch(err => {
-      console.error('Service Worker 注册失败:', err);
-    });
-  }
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
+            console.log('Service Worker 注册成功，作用域:', reg.scope);
+        }).catch(err => {
+            console.error('Service Worker 注册失败:', err);
+        });
+    }
 </script>
 </body>
 </html>
