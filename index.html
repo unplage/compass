@@ -3,226 +3,125 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>指南针</title>
+    <title>指南针 Pro</title>
     <meta name="theme-color" content="#0a0a12" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <link rel="manifest" href="manifest.json" />
     <style>
-        /* ===== 全局重置（保持不变） ===== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
         body {
-            background: #0a0a12;
-            color: #fff;
-            font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            touch-action: none;
+            background: #0a0a12; color: #fff; font-family: -apple-system, 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            height: 100vh; width: 100vw; overflow: hidden; display: flex; justify-content: center; align-items: center; touch-action: none;
         }
         .app-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            max-width: 480px;
-            max-height: 860px;
+            position: relative; width: 100%; height: 100%; max-width: 480px; max-height: 860px;
             background: radial-gradient(ellipse at 50% 40%, #16162a, #0a0a12 70%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px 16px 30px;
-            box-shadow: 0 0 60px rgba(0, 0, 0, 0.8);
-            overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px 16px 30px; box-shadow: 0 0 60px rgba(0,0,0,0.8); overflow: hidden;
         }
         .top-bar {
-            position: absolute;
-            top: 18px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-            pointer-events: none;
+            position: absolute; top: 18px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center;
+            z-index: 10; pointer-events: none;
         }
         .level-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(8px);
-            padding: 6px 14px 6px 10px;
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(8px); padding: 6px 14px 6px 10px; border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.08); pointer-events: auto;
         }
-        .level-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #4ade80;
-            flex-shrink: 0;
-            transition: background 0.3s, box-shadow 0.3s;
-        }
-        .level-dot.warning { background: #facc15; box-shadow: 0 0 12px rgba(250, 204, 21, 0.3); }
-        .level-dot.danger { background: #f87171; box-shadow: 0 0 12px rgba(248, 113, 113, 0.3); }
-        .level-dot.stable { background: #4ade80; box-shadow: 0 0 12px rgba(74, 222, 128, 0.5); }
-        .level-text {
-            font-size: 14px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.85);
-            font-variant-numeric: tabular-nums;
-        }
-        .level-text span { font-size: 12px; color: rgba(255, 255, 255, 0.4); margin-left: 2px; }
+        .level-dot { width: 10px; height: 10px; border-radius: 50%; background: #4ade80; flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s; }
+        .level-dot.warning { background: #facc15; box-shadow: 0 0 12px rgba(250,204,21,0.3); }
+        .level-dot.danger { background: #f87171; box-shadow: 0 0 12px rgba(248,113,113,0.3); }
+        .level-dot.stable { background: #4ade80; box-shadow: 0 0 12px rgba(74,222,128,0.5); }
+        .level-text { font-size: 14px; font-weight: 500; color: rgba(255,255,255,0.85); font-variant-numeric: tabular-nums; }
+        .level-text span { font-size: 12px; color: rgba(255,255,255,0.4); margin-left: 2px; }
         .status-badge {
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.5);
-            background: rgba(255, 255, 255, 0.04);
-            padding: 4px 12px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(4px);
-            white-space: nowrap;
+            font-size: 11px; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.04);
+            padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05);
+            backdrop-filter: blur(4px); white-space: nowrap; transition: color 0.3s;
         }
         .compass-wrapper {
-            position: relative;
-            width: 80vw;
-            max-width: 360px;
-            aspect-ratio: 1/1;
-            margin: 10px auto 0;
-            flex-shrink: 0;
+            position: relative; width: 80vw; max-width: 360px; aspect-ratio: 1/1; margin: 10px auto 0; flex-shrink: 0;
         }
-        #compassCanvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            border-radius: 50%;
-            box-shadow: 0 0 60px rgba(30, 30, 80, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.3);
-        }
+        #compassCanvas { width: 100%; height: 100%; display: block; border-radius: 50%; box-shadow: 0 0 60px rgba(30,30,80,0.3), inset 0 0 60px rgba(0,0,0,0.3); }
         .angle-display {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 5;
-            text-align: center;
-            pointer-events: none;
-            line-height: 1;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 5; text-align: center; pointer-events: none; line-height: 1;
         }
-        .angle-number {
-            font-size: clamp(36px, 10vw, 56px);
-            font-weight: 700;
-            color: #fff;
-            text-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
-            letter-spacing: 1px;
+        .angle-number { font-size: clamp(36px, 10vw, 56px); font-weight: 700; color: #fff; text-shadow: 0 0 30px rgba(0,0,0,0.6); letter-spacing: 1px; }
+        .angle-number .deg-symbol { font-size: 0.5em; font-weight: 300; color: rgba(255,255,255,0.5); margin-left: 2px; }
+        .angle-direction { font-size: clamp(12px, 2.8vw, 16px); font-weight: 400; color: rgba(255,255,255,0.4); letter-spacing: 2px; margin-top: 2px; }
+        .north-type { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 4px; letter-spacing: 1px; }
+
+        .warning-banner {
+            position: absolute; top: 60px; left: 20px; right: 20px; display: none; align-items: center; justify-content: center;
+            gap: 6px; padding: 8px 14px; border-radius: 12px; font-size: 12px; font-weight: 500; z-index: 15;
+            backdrop-filter: blur(8px); animation: slideDown 0.3s ease;
         }
-        .angle-number .deg-symbol { font-size: 0.5em; font-weight: 300; color: rgba(255, 255, 255, 0.5); margin-left: 2px; }
-        .angle-direction {
-            font-size: clamp(12px, 2.8vw, 16px);
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.4);
-            letter-spacing: 2px;
-            margin-top: 2px;
-        }
+        .warning-banner.tilt { background: rgba(250,204,21,0.12); border: 1px solid rgba(250,204,21,0.2); color: #facc15; }
+        .warning-banner.interference { background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.2); color: #f87171; }
+        .warning-banner.show { display: flex; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
         .bottom-info {
-            position: absolute;
-            bottom: 70px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-            pointer-events: none;
-            padding: 10px 4px 0;
-            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            position: absolute; bottom: 110px; left: 20px; right: 20px; display: flex; justify-content: space-between;
+            align-items: center; z-index: 10; pointer-events: none; padding: 10px 4px 0; border-top: 1px solid rgba(255,255,255,0.04);
         }
         .coord-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-        .coord-label { font-size: 10px; font-weight: 400; color: rgba(255, 255, 255, 0.25); text-transform: uppercase; letter-spacing: 1.5px; }
-        .coord-value { font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, 0.7); font-variant-numeric: tabular-nums; }
+        .coord-label { font-size: 10px; font-weight: 400; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 1.5px; }
+        .coord-value { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.7); font-variant-numeric: tabular-nums; }
+
+        .sensor-info { position: absolute; bottom: 88px; left: 0; right: 0; text-align: center; font-size: 10px; color: rgba(255,255,255,0.2); letter-spacing: 0.5px; z-index: 10; pointer-events: none; }
 
         .calibration-toolbar {
-            position: absolute;
-            bottom: 16px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-            z-index: 10;
+            position: absolute; bottom: 16px; left: 20px; right: 20px; display: flex; gap: 8px; z-index: 10; flex-wrap: wrap;
         }
         .calibration-toolbar button {
-            flex: 1;
-            padding: 10px 0;
-            border: none;
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: rgba(255, 255, 255, 0.06);
-            backdrop-filter: blur(8px);
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            letter-spacing: 0.5px;
+            flex: 1; min-width: 0; padding: 10px 0; border: none; border-radius: 30px; font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.06); backdrop-filter: blur(8px); color: #fff;
+            border: 1px solid rgba(255,255,255,0.08); letter-spacing: 0.5px; white-space: nowrap;
         }
-        .calibration-toolbar button:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.12); }
+        .calibration-toolbar button:active { transform: scale(0.95); background: rgba(255,255,255,0.12); }
         .calibration-toolbar .btn-primary { background: #3b82f6; border-color: #3b82f6; }
         .calibration-toolbar .btn-primary:active { background: #2563eb; }
         .calibration-toolbar .btn-accent { background: #8b5cf6; border-color: #8b5cf6; }
         .calibration-toolbar .btn-accent:active { background: #7c3aed; }
+        .calibration-toolbar .btn-success { background: #10b981; border-color: #10b981; }
+        .calibration-toolbar .btn-success:active { background: #059669; }
 
         .sensor-prompt {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(10, 10, 18, 0.94);
-            backdrop-filter: blur(12px);
-            z-index: 50;
-            padding: 40px;
-            text-align: center;
-            border-radius: 32px;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: none; flex-direction: column;
+            align-items: center; justify-content: center; background: rgba(10,10,18,0.94); backdrop-filter: blur(12px);
+            z-index: 50; padding: 40px; text-align: center; border-radius: 32px;
         }
         .sensor-prompt.show { display: flex; }
         .sensor-prompt .icon { font-size: 48px; margin-bottom: 18px; opacity: 0.8; }
         .sensor-prompt h3 { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 8px; }
-        .sensor-prompt p { font-size: 14px; color: rgba(255, 255, 255, 0.5); max-width: 280px; line-height: 1.6; margin-bottom: 20px; }
+        .sensor-prompt p { font-size: 14px; color: rgba(255,255,255,0.5); max-width: 280px; line-height: 1.6; margin-bottom: 20px; }
         .sensor-prompt .btn-primary {
-            padding: 12px 40px;
-            border: none;
-            border-radius: 30px;
-            background: #3b82f6;
-            color: #fff;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+            padding: 12px 40px; border: none; border-radius: 30px; background: #3b82f6; color: #fff;
+            font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 20px rgba(59,130,246,0.3);
         }
         .sensor-prompt .btn-primary:active { background: #2563eb; transform: scale(0.96); }
-        .sensor-prompt .error-detail { color: #f87171; font-size: 13px; margin-top: 12px; }
+        .sensor-prompt .error-detail { color: #f87171; font-size: 13px; margin-top: 12px; max-width: 280px; line-height: 1.5; }
+        .sensor-prompt .sensor-list { margin-top: 16px; font-size: 12px; color: rgba(255,255,255,0.3); text-align: left; max-width: 280px; }
+        .sensor-prompt .sensor-list li { margin: 4px 0; list-style: none; }
+        .sensor-prompt .sensor-list li::before { content: '○ '; }
+        .sensor-prompt .sensor-list li.available::before { content: '● '; color: #4ade80; }
+        .sensor-prompt .sensor-list li.unavailable::before { content: '✕ '; color: #f87171; }
+
         @media (max-width: 400px) {
             .top-bar { top: 12px; left: 14px; right: 14px; }
-            .calibration-toolbar { bottom: 12px; left: 14px; right: 14px; }
-            .calibration-toolbar button { font-size: 11px; padding: 8px 0; }
-            .bottom-info { bottom: 60px; left: 14px; right: 14px; }
+            .calibration-toolbar { bottom: 12px; left: 14px; right: 14px; gap: 6px; }
+            .calibration-toolbar button { font-size: 11px; padding: 8px 4px; }
+            .bottom-info { bottom: 100px; left: 14px; right: 14px; }
+            .sensor-info { bottom: 78px; }
             .coord-value { font-size: 11px; }
+            .warning-banner { top: 52px; left: 14px; right: 14px; font-size: 11px; }
         }
         @media (max-height: 640px) {
             .compass-wrapper { max-width: 260px; }
-            .bottom-info { bottom: 60px; }
+            .bottom-info { bottom: 90px; }
+            .sensor-info { bottom: 68px; }
             .calibration-toolbar { bottom: 10px; }
         }
     </style>
@@ -230,26 +129,30 @@
 <body>
 
 <div class="app-container">
-
-    <!-- 顶部栏 -->
     <div class="top-bar">
-        <div class="level-indicator">
+        <div class="level-indicator" id="levelIndicator" title="点击切换真北/磁北">
             <div class="level-dot stable" id="levelDot"></div>
             <div class="level-text" id="levelText">0<span>°</span></div>
         </div>
         <div class="status-badge" id="statusBadge">● 等待启动</div>
     </div>
 
-    <!-- 罗盘 -->
+    <div class="warning-banner tilt" id="tiltWarning">
+        <span>⚠️</span> 请平放手机以获得最佳精度
+    </div>
+    <div class="warning-banner interference" id="interferenceWarning">
+        <span>🧲</span> 检测到磁场干扰，请远离金属/电子设备
+    </div>
+
     <div class="compass-wrapper">
         <canvas id="compassCanvas"></canvas>
         <div class="angle-display">
             <div class="angle-number" id="angleNumber">--<span class="deg-symbol">°</span></div>
             <div class="angle-direction" id="angleDirection">-</div>
+            <div class="north-type" id="northType">磁北</div>
         </div>
     </div>
 
-    <!-- 经纬度 -->
     <div class="bottom-info">
         <div class="coord-item">
             <div class="coord-label">纬度</div>
@@ -259,507 +162,702 @@
             <div class="coord-label">经度</div>
             <div class="coord-value" id="lngValue">--°--'--"</div>
         </div>
+        <div class="coord-item" id="declItem">
+            <div class="coord-label">磁偏角</div>
+            <div class="coord-value" id="declValue">--°</div>
+        </div>
     </div>
 
-    <!-- 校准工具栏 -->
+    <div class="sensor-info" id="sensorInfo">传感器: 未连接</div>
+
     <div class="calibration-toolbar">
         <button class="btn-accent" id="calibrateBtn">🧲 画8字校准</button>
         <button class="btn-primary" id="setNorthBtn">⬆ 设当前为北</button>
+        <button class="btn-success" id="trueNorthBtn">🧲 磁北</button>
     </div>
 
-    <!-- 启动遮罩 -->
     <div class="sensor-prompt show" id="sensorPrompt">
         <div class="icon">🧭</div>
         <h3 id="promptTitle">启动指南针</h3>
         <p id="promptDesc">点击下方按钮，允许设备使用陀螺仪和磁力计</p>
         <button class="btn-primary" id="startBtn">启动指南针</button>
         <div class="error-detail" id="errorDetail"></div>
+        <ul class="sensor-list" id="sensorList"></ul>
     </div>
 </div>
 
 <script>
-    // ============================================================
-    //  DOM 引用
-    // ============================================================
-    const canvas = document.getElementById('compassCanvas');
-    const ctx = canvas.getContext('2d');
-    const angleNumber = document.getElementById('angleNumber');
-    const angleDirection = document.getElementById('angleDirection');
-    const levelText = document.getElementById('levelText');
-    const levelDot = document.getElementById('levelDot');
-    const statusBadge = document.getElementById('statusBadge');
-    const latValue = document.getElementById('latValue');
-    const lngValue = document.getElementById('lngValue');
-    const sensorPrompt = document.getElementById('sensorPrompt');
-    const startBtn = document.getElementById('startBtn');
-    const promptTitle = document.getElementById('promptTitle');
-    const promptDesc = document.getElementById('promptDesc');
-    const errorDetail = document.getElementById('errorDetail');
-    const calibrateBtn = document.getElementById('calibrateBtn');
-    const setNorthBtn = document.getElementById('setNorthBtn');
+// ============================================================
+//  WMM 2020 世界地磁模型（离线计算磁偏角）
+//  基于 NOAA 官方系数，覆盖 2020-2025
+// ============================================================
+const WMM2020 = {
+    epoch: 2020.0,
+    gnm: [
+        [0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,-29404.5,-1450.7,0,0,0,0,0,0,0,0,0,0],
+        [0,-2500.0,2982.0,1676.8,0,0,0,0,0,0,0,0,0],
+        [0,1363.9,-2381.0,1226.0,581.9,0,0,0,0,0,0,0,0],
+        [0,907.2,813.7,120.3,-335.0,70.3,0,0,0,0,0,0,0],
+        [0,-232.6,360.1,192.4,-141.0,-157.4,4.3,0,0,0,0,0,0],
+        [0,69.5,67.4,72.8,-129.8,-28.9,13.2,-70.9,0,0,0,0,0],
+        [0,81.6,-76.1,-8.4,56.5,15.8,6.4,-7.2,4.1,0,0,0,0],
+        [0,24.0,8.6,-16.9,-3.2,-20.6,13.3,11.7,-16.5,-2.0,0,0,0],
+        [0,5.4,8.8,3.1,-12.6,12.2,-6.2,-5.1,-3.6,5.7,-5.0,0,0],
+        [0,-1.9,-6.5,-0.5,0.2,0.6,-0.3,1.7,-0.1,0.3,-0.9,0.5,0],
+        [0,2.9,-1.3,-2.4,2.9,-1.5,-0.1,-0.7,0.2,-2.1,0.3,-1.0,-0.3],
+        [0,-2.0,-0.1,0.5,1.3,-1.2,0.7,0.3,0.5,-0.3,-0.8,0.4,0.2]
+    ],
+    hnm: [
+        [0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,4652.9,0,0,0,0,0,0,0,0,0,0],
+        [0,0,-2991.6,-734.8,0,0,0,0,0,0,0,0,0],
+        [0,0,-82.2,241.8,-542.9,0,0,0,0,0,0,0,0],
+        [0,0,283.4,-188.6,180.9,-329.5,0,0,0,0,0,0,0],
+        [0,0,47.5,196.9,-119.3,16.1,100.1,0,0,0,0,0,0],
+        [0,0,-20.7,33.2,9.1,-7.7,61.5,55.4,0,0,0,0,0],
+        [0,0,-54.1,-19.4,5.3,24.4,3.4,-27.7,-8.4,0,0,0,0],
+        [0,0,8.4,-23.4,2.9,-19.1,-17.4,16.2,5.3,8.2,0,0,0],
+        [0,0,-21.5,10.8,9.8,-5.1,-6.3,7.1,0.2,1.7,-0.2,0,0],
+        [0,0,3.3,-0.3,0.3,3.6,-4.0,-0.5,-4.6,2.0,-1.3,-2.0,0],
+        [0,0,-2.4,-1.1,-2.4,1.8,-0.5,-0.5,0.8,-0.6,0.8,0.2,0.3],
+        [0,0,0.2,0.4,1.3,-0.8,0.5,-0.4,-0.4,-0.2,-0.3,0.1,0.2]
+    ],
+    gtnm: [
+        [0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,6.7,7.7,0,0,0,0,0,0,0,0,0,0],
+        [0,-11.5,-11.1,-6.8,0,0,0,0,0,0,0,0,0],
+        [0,2.2,3.1,-1.1,-0.4,0,0,0,0,0,0,0,0],
+        [0,-1.1,-1.6,0.6,0.3,1.4,0,0,0,0,0,0,0],
+        [0,0.3,0.6,-0.2,0.5,1.3,-0.2,0,0,0,0,0,0],
+        [0,0.2,-0.3,0.3,0.5,0.1,-0.2,-0.6,0,0,0,0,0],
+        [0,0.1,-0.1,-0.3,0.1,-0.2,0.3,0.2,0.3,0,0,0,0],
+        [0,-0.1,-0.1,-0.2,0.2,-0.2,0.4,0.4,-0.2,0.1,0,0,0],
+        [0,0.1,-0.2,0.0,0.1,0.0,-0.2,0.0,-0.1,0.0,0.0,0,0],
+        [0,0.0,-0.1,0.0,0.0,0.1,0.0,0.0,0.0,0.0,0.0,0.0,0],
+        [0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0],
+        [0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0]
+    ],
+    htnm: [
+        [0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,-25.1,0,0,0,0,0,0,0,0,0,0],
+        [0,0,-30.2,-23.9,0,0,0,0,0,0,0,0,0],
+        [0,0,-1.0,0.5,1.5,0,0,0,0,0,0,0,0],
+        [0,0,-0.5,0.4,0.3,0.0,0,0,0,0,0,0,0],
+        [0,0,0.1,-0.2,-0.2,0.0,0.1,0,0,0,0,0,0],
+        [0,0,0.1,0.2,-0.1,0.1,-0.2,-0.2,0,0,0,0,0],
+        [0,0,0.1,-0.1,0.0,0.1,-0.1,0.0,0.0,0,0,0,0],
+        [0,0,0.0,-0.1,0.2,-0.1,0.0,0.1,0.0,0.0,0,0,0],
+        [0,0,0.0,0.0,0.0,0.0,0.1,0.0,0.0,0.0,0.0,0,0],
+        [0,0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0],
+        [0,0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0],
+        [0,0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0]
+    ]
+};
 
-    // ============================================================
-    //  状态
-    // ============================================================
-    let currentAlpha = 0,
-        currentBeta = 0,
-        currentGamma = 0;
-    let hasOrientation = false;
-    let isSensorStarted = false;
-    let canvasSize = 0,
-        dpr = 1;
+function computeWMMDeclination(lat, lon, year) {
+    const dt = year - WMM2020.epoch;
+    const rad = Math.PI / 180;
+    const theta = (90 - lat) * rad; // 余纬度
+    const phi = lon * rad;
+    const sinT = Math.sin(theta);
+    const cosT = Math.cos(theta);
 
-    // 用户偏移补偿
-    let userOffset = 0;
+    // 关联勒让德多项式递推
+    const P = Array(13).fill(null).map(() => Array(13).fill(0));
+    P[0][0] = 1;
+    P[1][0] = cosT;
+    P[1][1] = sinT;
 
-    // 平滑滤波 (使用简单 EMA)
-    let smoothedAlpha = null;
-    const SMOOTH_FACTOR = 0.25;
-
-    // 稳定性检测
-    let alphaHistory = [];
-    const HISTORY_SIZE = 12;
-
-    const DIR_NAMES = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-
-    // ============================================================
-    //  Canvas 尺寸管理
-    // ============================================================
-    function resizeCanvas() {
-        const wrapper = document.querySelector('.compass-wrapper');
-        const rect = wrapper.getBoundingClientRect();
-        const size = rect.width;
-        dpr = window.devicePixelRatio || 1;
-        canvasSize = size;
-        canvas.width = size * dpr;
-        canvas.height = size * dpr;
-        canvas.style.width = size + 'px';
-        canvas.style.height = size + 'px';
-        ctx.scale(dpr, dpr);
-        drawCompass(0);
-    }
-
-    // ============================================================
-    //  绘制罗盘 (核心绘图) —— 传统模式：刻度盘固定，指针旋转
-    // ============================================================
-    function drawCompass(alpha) {
-        const size = canvasSize;
-        if (size === 0) return;
-        const cx = size / 2,
-            cy = size / 2,
-            radius = size / 2 - 6;
-        ctx.clearRect(0, 0, size, size);
-
-        // ---------- 外圈光晕 (固定) ----------
-        const grad = ctx.createRadialGradient(cx, cy, radius * 0.92, cx, cy, radius);
-        grad.addColorStop(0, 'rgba(30, 30, 60, 0)');
-        grad.addColorStop(0.85, 'rgba(30, 30, 60, 0.1)');
-        grad.addColorStop(1, 'rgba(60, 60, 120, 0.15)');
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // ---------- 刻度盘 (固定，不旋转) ----------
-        // 刻度
-        for (let i = 0; i < 360; i++) {
-            const angleRad = (i - 90) * Math.PI / 180;
-            const isLong = i % 30 === 0,
-                isMid = i % 5 === 0;
-            let tickLen, lineWidth, color;
-            if (isLong) { tickLen = radius * 0.14;
-                lineWidth = 2.5;
-                color = 'rgba(255,255,255,0.9)'; } else if (isMid) { tickLen = radius * 0.09;
-                lineWidth = 1.8;
-                color = 'rgba(255,255,255,0.5)'; } else { tickLen = radius * 0.05;
-                lineWidth = 1;
-                color = 'rgba(255,255,255,0.2)'; }
-            const startR = radius - tickLen,
-                endR = radius;
-            const x1 = cx + startR * Math.cos(angleRad),
-                y1 = cy + startR * Math.sin(angleRad);
-            const x2 = cx + endR * Math.cos(angleRad),
-                y2 = cy + endR * Math.sin(angleRad);
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = lineWidth;
-            ctx.stroke();
-        }
-
-        // 主方向字母 (固定)
-        const dirs = [
-            { label: 'N', angle: 0, color: '#ff3b3b' },
-            { label: 'E', angle: 90, color: 'rgba(255,255,255,0.7)' },
-            { label: 'S', angle: 180, color: 'rgba(255,255,255,0.7)' },
-            { label: 'W', angle: 270, color: 'rgba(255,255,255,0.7)' },
-        ];
-        const fontSize = radius * 0.13;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        dirs.forEach(d => {
-            const rad = (d.angle - 90) * Math.PI / 180;
-            const r = radius * 0.78;
-            const x = cx + r * Math.cos(rad),
-                y = cy + r * Math.sin(rad);
-            ctx.font = `600 ${fontSize}px -apple-system, "Helvetica Neue", sans-serif`;
-            ctx.fillStyle = d.color;
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 10;
-            ctx.fillText(d.label, x, y + 1);
-            ctx.shadowBlur = 0;
-        });
-
-        // 次要方向 (固定)
-        const subDirs = [{ label: 'NE', angle: 45 }, { label: 'SE', angle: 135 }, { label: 'SW', angle: 225 }, { label: 'NW',
-                angle: 315 }];
-        const subFontSize = radius * 0.075;
-        ctx.font = `400 ${subFontSize}px -apple-system, "Helvetica Neue", sans-serif`;
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        subDirs.forEach(d => {
-            const rad = (d.angle - 90) * Math.PI / 180;
-            const r = radius * 0.88;
-            ctx.fillText(d.label, cx + r * Math.cos(rad), cy + r * Math.sin(rad) + 1);
-        });
-
-        // 内圈装饰 (固定)
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius * 0.65, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(cx, cy, radius * 0.42, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255,255,255,0.03)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        // ---------- 红色指针 (旋转 alpha 度) ----------
-        // 指针默认指向上方（即设备顶部），旋转 alpha 度表示当前航向
-        const pointerLen = radius * 0.35;
-        const pointerBase = radius * 0.12;
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(alpha * Math.PI / 180); // 顺时针旋转 alpha 度
-        ctx.beginPath();
-        ctx.moveTo(0, -pointerLen);
-        ctx.lineTo(-pointerBase * 0.5, -pointerLen * 0.25);
-        ctx.lineTo(-pointerBase * 0.3, pointerLen * 0.1);
-        ctx.lineTo(0, pointerLen * 0.18);
-        ctx.lineTo(pointerBase * 0.3, pointerLen * 0.1);
-        ctx.lineTo(pointerBase * 0.5, -pointerLen * 0.25);
-        ctx.closePath();
-        const gradPtr = ctx.createLinearGradient(0, -pointerLen, 0, pointerLen * 0.18);
-        gradPtr.addColorStop(0, '#ff1744');
-        gradPtr.addColorStop(0.5, '#d50000');
-        gradPtr.addColorStop(1, '#b71c1c');
-        ctx.fillStyle = gradPtr;
-        ctx.shadowColor = 'rgba(255, 23, 68, 0.4)';
-        ctx.shadowBlur = 20;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-        // 中心圆
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.045, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.shadowColor = 'rgba(0,0,0,0.5)';
-        ctx.shadowBlur = 10;
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.02, 0, Math.PI * 2);
-        ctx.fillStyle = '#ff1744';
-        ctx.shadowBlur = 0;
-        ctx.fill();
-        ctx.restore();
-
-        // N 标记小红点 (固定)
-        const nRad = (-90) * Math.PI / 180;
-        const nR = radius - 2;
-        ctx.beginPath();
-        ctx.arc(cx + nR * Math.cos(nRad), cy + nR * Math.sin(nRad), 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 59, 59, 0.6)';
-        ctx.shadowColor = 'rgba(255, 59, 59, 0.3)';
-        ctx.shadowBlur = 15;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-    }
-
-    // ============================================================
-    //  更新显示 (含偏移、平滑、稳定性)
-    // ============================================================
-    function updateDisplay(rawAlpha, beta, gamma) {
-        // 应用用户偏移
-        let corrected = (rawAlpha + userOffset) % 360;
-        if (corrected < 0) corrected += 360;
-
-        // 平滑处理
-        if (smoothedAlpha === null) {
-            smoothedAlpha = corrected;
-        } else {
-            let diff = corrected - smoothedAlpha;
-            if (diff > 180) diff -= 360;
-            else if (diff < -180) diff += 360;
-            smoothedAlpha += diff * SMOOTH_FACTOR;
-            smoothedAlpha = ((smoothedAlpha % 360) + 360) % 360;
-        }
-        const displayAlpha = smoothedAlpha;
-
-        // 绘制罗盘：传入 displayAlpha，指针会旋转，刻度盘固定
-        drawCompass(displayAlpha);
-
-        // 数字显示
-        const displayAngle = Math.round(displayAlpha) % 360;
-        angleNumber.innerHTML = `${displayAngle}<span class="deg-symbol">°</span>`;
-        const dirIndex = Math.round(((displayAlpha % 360) / 45)) % 8;
-        angleDirection.textContent = DIR_NAMES[dirIndex] || '-';
-
-        // 水平仪
-        const tilt = Math.sqrt(beta * beta + gamma * gamma);
-        levelText.innerHTML = `${tilt.toFixed(1)}<span>°</span>`;
-        if (tilt < 3) {
-            levelDot.className = 'level-dot stable';
-        } else if (tilt < 10) {
-            levelDot.className = 'level-dot warning';
-        } else {
-            levelDot.className = 'level-dot danger';
-        }
-
-        // 稳定性检测 (基于原始 alpha)
-        alphaHistory.push(rawAlpha);
-        if (alphaHistory.length > HISTORY_SIZE) alphaHistory.shift();
-        if (alphaHistory.length > 5) {
-            const avg = alphaHistory.reduce((a, b) => a + b, 0) / alphaHistory.length;
-            const variance = alphaHistory.reduce((a, b) => a + (b - avg) * (b - avg), 0) / alphaHistory.length;
-            const isStable = variance < 2.0;
-            if (isStable) {
-                statusBadge.textContent = '● 稳定';
-                statusBadge.style.color = '#4ade80';
+    for (let n = 2; n <= 12; n++) {
+        for (let m = 0; m <= n; m++) {
+            if (m === 0) {
+                P[n][0] = ((2 * n - 1) * cosT * P[n-1][0] - (n - 1) * P[n-2][0]) / n;
+            } else if (m === n) {
+                P[n][n] = (2 * n - 1) * sinT * P[n-1][n-1];
             } else {
-                statusBadge.textContent = '● 移动中 (请画8字)';
-                statusBadge.style.color = '#facc15';
+                P[n][m] = ((2 * n - 1) * cosT * P[n-1][m] - (n + m - 1) * P[n-2][m]) / (n - m);
             }
-        } else {
-            statusBadge.textContent = '● 初始化...';
         }
     }
 
-    // ============================================================
-    //  传感器事件处理
-    // ============================================================
-    function handleOrientation(event) {
-        let alpha = event.alpha || 0;
-        let beta = event.beta || 0;
-        let gamma = event.gamma || 0;
+    // 地磁场分量 X(北向), Y(东向)
+    let X = 0, Y = 0;
+    for (let n = 1; n <= 12; n++) {
+        for (let m = 0; m <= n; m++) {
+            const g = WMM2020.gnm[n][m] + dt * WMM2020.gtnm[n][m];
+            const h = WMM2020.hnm[n][m] + dt * WMM2020.htnm[n][m];
+            const cosMphi = Math.cos(m * phi);
+            const sinMphi = Math.sin(m * phi);
 
-        // iOS 使用 webkitCompassHeading
-        if (typeof event.webkitCompassHeading === 'number') {
-            alpha = event.webkitCompassHeading;
-        }
-
-        alpha = ((alpha % 360) + 360) % 360;
-        beta = Math.max(-90, Math.min(90, beta));
-        gamma = Math.max(-90, Math.min(90, gamma));
-
-        currentAlpha = alpha;
-        currentBeta = beta;
-        currentGamma = gamma;
-
-        if (!hasOrientation) {
-            hasOrientation = true;
-            sensorPrompt.classList.remove('show');
-            statusBadge.textContent = '● 已连接';
-            // 初始化平滑值
-            smoothedAlpha = alpha;
-        }
-
-        updateDisplay(alpha, beta, gamma);
-
-        // 调试日志 (可取消注释查看)
-        // console.log('alpha:', alpha.toFixed(1), 'beta:', beta.toFixed(1), 'gamma:', gamma.toFixed(1));
-    }
-
-    function onSensorError(e) {
-        console.warn('Sensor error:', e);
-        if (!hasOrientation) {
-            showError('传感器启动失败，请检查 HTTPS 或重启浏览器');
-        }
-    }
-
-    // ============================================================
-    //  地理位置
-    // ============================================================
-    function getLocation() {
-        if (!navigator.geolocation) {
-            latValue.textContent = '不支持';
-            lngValue.textContent = '不支持';
-            return;
-        }
-        navigator.geolocation.getCurrentPosition(
-            (pos) => {
-                const lat = pos.coords.latitude,
-                    lng = pos.coords.longitude;
-                latValue.textContent = formatCoord(lat, 'lat');
-                lngValue.textContent = formatCoord(lng, 'lng');
-            },
-            () => {
-                latValue.textContent = '--°--\'--"';
-                lngValue.textContent = '--°--\'--"';
-            }, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
-        );
-    }
-
-    function formatCoord(value, type) {
-        const abs = Math.abs(value);
-        const deg = Math.floor(abs);
-        const min = Math.floor((abs - deg) * 60);
-        const sec = ((abs - deg - min / 60) * 3600).toFixed(1);
-        const dir = type === 'lat' ? (value >= 0 ? 'N' : 'S') : (value >= 0 ? 'E' : 'W');
-        return `${deg}°${min}'${sec}"${dir}`;
-    }
-
-    // ============================================================
-    //  校准功能
-    // ============================================================
-    function setCurrentAsNorth() {
-        if (!hasOrientation) {
-            alert('请等待指南针数据稳定后再操作');
-            return;
-        }
-        const newOffset = (360 - currentAlpha) % 360;
-        userOffset = newOffset;
-        smoothedAlpha = 0; // 重置平滑值
-        updateDisplay(currentAlpha, currentBeta, currentGamma);
-        if (navigator.vibrate) navigator.vibrate(20);
-        statusBadge.textContent = '● 已校准偏移: ' + Math.round(newOffset) + '°';
-        setTimeout(() => {
-            if (statusBadge.textContent.includes('校准偏移')) {
-                statusBadge.textContent = '● 稳定';
-                statusBadge.style.color = '#4ade80';
+            if (m === 0) {
+                // dP/dtheta for m=0: -P_n^1
+                X += -g * P[n][1];
+            } else {
+                // 使用递推关系计算 dP/dtheta
+                // dP/dtheta = (n*cosT*P - (n+m)*P_{n-1}) / sinT
+                const dP = (n * cosT * P[n][m] - (n + m) * P[n-1][m]) / sinT;
+                X += (g * cosMphi + h * sinMphi) * dP;
+                Y += m * (-g * sinMphi + h * cosMphi) * P[n][m] / sinT;
             }
-        }, 1500);
-    }
-
-    function promptFigureEight() {
-        if (!hasOrientation) {
-            alert('请先启动指南针');
-            return;
-        }
-        statusBadge.textContent = '🧲 请画 ∞ 字移动手机...';
-        statusBadge.style.color = '#facc15';
-        alphaHistory = [];
-        setTimeout(() => {}, 4000);
-        if (navigator.vibrate) navigator.vibrate(10);
-    }
-
-    // ============================================================
-    //  启动逻辑
-    // ============================================================
-    function startCompass() {
-        if (isSensorStarted) return;
-        isSensorStarted = true;
-        startBtn.disabled = true;
-        startBtn.textContent = '启动中...';
-        errorDetail.textContent = '';
-
-        if (!window.DeviceOrientationEvent) {
-            showError('设备不支持陀螺仪');
-            return;
-        }
-
-        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission()
-                .then(response => {
-                    if (response === 'granted') {
-                        initListener();
-                    } else {
-                        showError('权限被拒绝，请在设置中允许');
-                        startBtn.disabled = false;
-                        startBtn.textContent = '启动指南针';
-                    }
-                })
-                .catch(err => {
-                    showError('权限请求失败: ' + err.message);
-                    startBtn.disabled = false;
-                    startBtn.textContent = '启动指南针';
-                });
-        } else {
-            initListener();
-            setTimeout(() => {
-                if (!hasOrientation) {
-                    showError('传感器无响应，请确认页面使用 HTTPS');
-                    startBtn.disabled = false;
-                    startBtn.textContent = '启动指南针';
-                }
-            }, 5000);
         }
     }
 
-    function initListener() {
-        window.removeEventListener('deviceorientation', handleOrientation);
-        window.addEventListener('deviceorientation', handleOrientation, true);
-        window.addEventListener('deviceorientationerror', onSensorError, true);
-        getLocation();
-        promptTitle.textContent = '等待数据...';
-        promptDesc.textContent = '请平放手机并缓慢旋转';
-        startBtn.style.display = 'none';
+    return Math.atan2(Y, X) * 180 / Math.PI;
+}
+
+// ============================================================
+//  配置
+// ============================================================
+const CONFIG = {
+    SMOOTH_FACTOR: 0.08,
+    HISTORY_SIZE: 20,
+    TILT_WARNING_THRESHOLD: 15,
+    JITTER_THRESHOLD: 10,
+    MAGNETIC_VARIANCE_THRESHOLD: 20,
+    SENSOR_TIMEOUT: 8000,
+};
+
+// ============================================================
+//  DOM 引用
+// ============================================================
+const canvas = document.getElementById('compassCanvas');
+const ctx = canvas.getContext('2d');
+const angleNumber = document.getElementById('angleNumber');
+const angleDirection = document.getElementById('angleDirection');
+const northType = document.getElementById('northType');
+const levelText = document.getElementById('levelText');
+const levelDot = document.getElementById('levelDot');
+const statusBadge = document.getElementById('statusBadge');
+const latValue = document.getElementById('latValue');
+const lngValue = document.getElementById('lngValue');
+const declValue = document.getElementById('declValue');
+const sensorInfo = document.getElementById('sensorInfo');
+const sensorPrompt = document.getElementById('sensorPrompt');
+const startBtn = document.getElementById('startBtn');
+const promptTitle = document.getElementById('promptTitle');
+const promptDesc = document.getElementById('promptDesc');
+const errorDetail = document.getElementById('errorDetail');
+const sensorList = document.getElementById('sensorList');
+const calibrateBtn = document.getElementById('calibrateBtn');
+const setNorthBtn = document.getElementById('setNorthBtn');
+const trueNorthBtn = document.getElementById('trueNorthBtn');
+const tiltWarning = document.getElementById('tiltWarning');
+const interferenceWarning = document.getElementById('interferenceWarning');
+
+// ============================================================
+//  状态
+// ============================================================
+const state = {
+    currentAlpha: 0, currentBeta: 0, currentGamma: 0,
+    rawAlpha: 0, smoothedAlpha: null, userOffset: 0,
+    magneticDeclination: 0, useTrueNorth: false,
+    hasOrientation: false, isSensorStarted: false,
+    sensorType: 'none', canvasSize: 0, dpr: 1,
+    alphaHistory: [], betaHistory: [], gammaHistory: [],
+    isLevel: true, isStable: false, isMagneticInterference: false,
+    screenOrientation: 0, absoluteOrientationSensor: null,
+};
+
+const DIR_NAMES = ['北', '东北', '东', '东南', '南', '西南', '西', '西北'];
+
+// ============================================================
+//  Canvas
+// ============================================================
+function resizeCanvas() {
+    const wrapper = document.querySelector('.compass-wrapper');
+    const rect = wrapper.getBoundingClientRect();
+    const size = rect.width;
+    state.dpr = window.devicePixelRatio || 1;
+    state.canvasSize = size;
+    canvas.width = size * state.dpr;
+    canvas.height = size * state.dpr;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    drawCompass(state.currentAlpha || 0);
+}
+
+function drawCompass(heading) {
+    const size = state.canvasSize;
+    if (size === 0) return;
+    const cx = size / 2, cy = size / 2, radius = size / 2 - 6;
+    ctx.clearRect(0, 0, size, size);
+
+    const grad = ctx.createRadialGradient(cx, cy, radius * 0.92, cx, cy, radius);
+    grad.addColorStop(0, 'rgba(30,30,60,0)');
+    grad.addColorStop(0.85, 'rgba(30,30,60,0.1)');
+    grad.addColorStop(1, 'rgba(60,60,120,0.15)');
+    ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    for (let i = 0; i < 360; i++) {
+        const angleRad = (i - 90) * Math.PI / 180;
+        const isLong = i % 30 === 0, isMid = i % 5 === 0;
+        let tickLen, lineWidth, color;
+        if (isLong) { tickLen = radius * 0.14; lineWidth = 2.5; color = 'rgba(255,255,255,0.9)'; }
+        else if (isMid) { tickLen = radius * 0.09; lineWidth = 1.8; color = 'rgba(255,255,255,0.5)'; }
+        else { tickLen = radius * 0.05; lineWidth = 1; color = 'rgba(255,255,255,0.2)'; }
+        const startR = radius - tickLen, endR = radius;
+        ctx.beginPath();
+        ctx.moveTo(cx + startR * Math.cos(angleRad), cy + startR * Math.sin(angleRad));
+        ctx.lineTo(cx + endR * Math.cos(angleRad), cy + endR * Math.sin(angleRad));
+        ctx.strokeStyle = color; ctx.lineWidth = lineWidth; ctx.stroke();
     }
 
-    function showError(msg) {
-        errorDetail.textContent = msg;
-        promptTitle.textContent = '启动失败';
-        startBtn.textContent = '重试';
-        startBtn.disabled = false;
-        startBtn.style.display = 'inline-block';
-        startBtn.onclick = () => {
-            errorDetail.textContent = '';
-            promptTitle.textContent = '启动指南针';
-            promptDesc.textContent = '点击下方按钮，允许设备使用陀螺仪';
-            startBtn.textContent = '启动指南针';
-            startBtn.onclick = startCompass;
-            isSensorStarted = false;
-            startCompass();
-        };
+    const dirs = [
+        { label: 'N', angle: 0, color: '#ff3b3b' },
+        { label: 'E', angle: 90, color: 'rgba(255,255,255,0.7)' },
+        { label: 'S', angle: 180, color: 'rgba(255,255,255,0.7)' },
+        { label: 'W', angle: 270, color: 'rgba(255,255,255,0.7)' },
+    ];
+    const fontSize = radius * 0.13;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    dirs.forEach(d => {
+        const rad = (d.angle - 90) * Math.PI / 180;
+        const r = radius * 0.78;
+        ctx.font = `600 ${fontSize}px -apple-system, "Helvetica Neue", sans-serif`;
+        ctx.fillStyle = d.color; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
+        ctx.fillText(d.label, cx + r * Math.cos(rad), cy + r * Math.sin(rad) + 1);
+        ctx.shadowBlur = 0;
+    });
+
+    const subDirs = [{ label: 'NE', angle: 45 }, { label: 'SE', angle: 135 }, { label: 'SW', angle: 225 }, { label: 'NW', angle: 315 }];
+    const subFontSize = radius * 0.075;
+    ctx.font = `400 ${subFontSize}px -apple-system, "Helvetica Neue", sans-serif`;
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    subDirs.forEach(d => {
+        const rad = (d.angle - 90) * Math.PI / 180;
+        const r = radius * 0.88;
+        ctx.fillText(d.label, cx + r * Math.cos(rad), cy + r * Math.sin(rad) + 1);
+    });
+
+    ctx.beginPath(); ctx.arc(cx, cy, radius * 0.65, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, radius * 0.42, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)'; ctx.lineWidth = 1; ctx.stroke();
+
+    const pointerLen = radius * 0.35, pointerBase = radius * 0.12;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(heading * Math.PI / 180);
+    ctx.beginPath();
+    ctx.moveTo(0, -pointerLen);
+    ctx.lineTo(-pointerBase * 0.5, -pointerLen * 0.25);
+    ctx.lineTo(-pointerBase * 0.3, pointerLen * 0.1);
+    ctx.lineTo(0, pointerLen * 0.18);
+    ctx.lineTo(pointerBase * 0.3, pointerLen * 0.1);
+    ctx.lineTo(pointerBase * 0.5, -pointerLen * 0.25);
+    ctx.closePath();
+    const gradPtr = ctx.createLinearGradient(0, -pointerLen, 0, pointerLen * 0.18);
+    gradPtr.addColorStop(0, '#ff1744'); gradPtr.addColorStop(0.5, '#d50000'); gradPtr.addColorStop(1, '#b71c1c');
+    ctx.fillStyle = gradPtr; ctx.shadowColor = 'rgba(255,23,68,0.4)'; ctx.shadowBlur = 20; ctx.fill();
+    ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 0.8; ctx.stroke();
+    ctx.beginPath(); ctx.arc(0, 0, radius * 0.045, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, radius * 0.02, 0, Math.PI * 2);
+    ctx.fillStyle = '#ff1744'; ctx.shadowBlur = 0; ctx.fill();
+    ctx.restore();
+
+    const nRad = (-90) * Math.PI / 180, nR = radius - 2;
+    ctx.beginPath(); ctx.arc(cx + nR * Math.cos(nRad), cy + nR * Math.sin(nRad), 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,59,59,0.6)'; ctx.shadowColor = 'rgba(255,59,59,0.3)'; ctx.shadowBlur = 15; ctx.fill();
+    ctx.shadowBlur = 0;
+}
+
+// ============================================================
+//  航向计算
+// ============================================================
+function computeTiltCompensatedHeading(alpha, beta, gamma) {
+    const degToRad = Math.PI / 180;
+    const x = beta * degToRad, y = gamma * degToRad, z = alpha * degToRad;
+    const cX = Math.cos(x), cY = Math.cos(y), cZ = Math.cos(z);
+    const sX = Math.sin(x), sY = Math.sin(y), sZ = Math.sin(z);
+    const m12 = -sZ * cX, m22 = cZ * cX;
+    let heading = Math.atan2(-m12, m22) * 180 / Math.PI;
+    heading += state.screenOrientation;
+    heading = ((heading % 360) + 360) % 360;
+    return heading;
+}
+
+function computeHeadingFromQuaternion(q) {
+    const [x, y, z, w] = q;
+    let heading = Math.atan2(2 * (w * x + y * z), 1 - 2 * (x * x + y * y)) * 180 / Math.PI;
+    heading = ((heading % 360) + 360) % 360;
+    return heading;
+}
+
+function smoothHeading(newHeading) {
+    if (state.smoothedAlpha === null) { state.smoothedAlpha = newHeading; return newHeading; }
+    let diff = newHeading - state.smoothedAlpha;
+    if (diff > 180) diff -= 360; else if (diff < -180) diff += 360;
+    let factor = CONFIG.SMOOTH_FACTOR;
+    if (Math.abs(diff) > CONFIG.JITTER_THRESHOLD * 2) factor = 0.02;
+    else if (Math.abs(diff) > CONFIG.JITTER_THRESHOLD) factor = 0.15;
+    state.smoothedAlpha += diff * factor;
+    state.smoothedAlpha = ((state.smoothedAlpha % 360) + 360) % 360;
+    return state.smoothedAlpha;
+}
+
+// ============================================================
+//  稳定性检测
+// ============================================================
+function updateStability() {
+    const history = state.alphaHistory;
+    if (history.length < 5) return;
+    const avg = circularAverage(history);
+    const variance = circularVariance(history, avg);
+    state.isStable = variance < 2.5;
+    const recent = history.slice(-5);
+    let maxChange = 0;
+    for (let i = 1; i < recent.length; i++) {
+        let d = Math.abs(recent[i] - recent[i-1]);
+        if (d > 180) d = 360 - d;
+        maxChange = Math.max(maxChange, d);
     }
+    state.isMagneticInterference = variance > CONFIG.MAGNETIC_VARIANCE_THRESHOLD && maxChange < 15;
+    updateStatusUI();
+}
 
-    // ============================================================
-    //  初始化
-    // ============================================================
-    function init() {
-        resizeCanvas();
-        drawCompass(0);
-        sensorPrompt.classList.add('show');
-        startBtn.onclick = startCompass;
-        calibrateBtn.onclick = promptFigureEight;
-        setNorthBtn.onclick = setCurrentAsNorth;
+function circularAverage(angles) {
+    let sumSin = 0, sumCos = 0;
+    for (const a of angles) { const rad = a * Math.PI / 180; sumSin += Math.sin(rad); sumCos += Math.cos(rad); }
+    return Math.atan2(sumSin, sumCos) * 180 / Math.PI;
+}
 
-        window.addEventListener('resize', () => { resizeCanvas(); });
-        window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 300));
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) getLocation();
+function circularVariance(angles, avg) {
+    let sumSq = 0;
+    for (const a of angles) {
+        let diff = a - avg;
+        if (diff > 180) diff -= 360; else if (diff < -180) diff += 360;
+        sumSq += diff * diff;
+    }
+    return sumSq / angles.length;
+}
+
+// ============================================================
+//  显示更新
+// ============================================================
+function updateDisplay() {
+    const heading = state.currentAlpha;
+    drawCompass(heading);
+    const displayAngle = Math.round(heading) % 360;
+    angleNumber.innerHTML = `${displayAngle}<span class="deg-symbol">°</span>`;
+    const dirIndex = Math.round(((heading % 360) / 45)) % 8;
+    angleDirection.textContent = DIR_NAMES[dirIndex] || '-';
+    northType.textContent = state.useTrueNorth ? '真北' : '磁北';
+
+    const tilt = Math.sqrt(state.currentBeta * state.currentBeta + state.currentGamma * state.currentGamma);
+    levelText.innerHTML = `${tilt.toFixed(1)}<span>°</span>`;
+    if (tilt < 3) levelDot.className = 'level-dot stable';
+    else if (tilt < 10) levelDot.className = 'level-dot warning';
+    else levelDot.className = 'level-dot danger';
+
+    state.isLevel = tilt < CONFIG.TILT_WARNING_THRESHOLD;
+    tiltWarning.classList.toggle('show', !state.isLevel);
+    interferenceWarning.classList.toggle('show', state.isMagneticInterference);
+
+    const sensorNames = {
+        'absolute-orientation': 'AbsoluteOrientation (高精度)',
+        'deviceorientationabsolute': 'DeviceOrientationAbsolute',
+        'webkit': 'WebKit Compass (iOS)',
+        'deviceorientation': 'DeviceOrientation + 倾斜补偿',
+        'none': '未连接'
+    };
+    sensorInfo.textContent = `传感器: ${sensorNames[state.sensorType] || state.sensorType}`;
+}
+
+function updateStatusUI() {
+    if (state.isMagneticInterference) { statusBadge.textContent = '● 磁场干扰'; statusBadge.style.color = '#f87171'; }
+    else if (state.isStable) { statusBadge.textContent = '● 稳定'; statusBadge.style.color = '#4ade80'; }
+    else { statusBadge.textContent = '● 移动中'; statusBadge.style.color = '#facc15'; }
+}
+
+// ============================================================
+//  传感器处理
+// ============================================================
+function initAbsoluteOrientationSensor() {
+    if (!('AbsoluteOrientationSensor' in window)) return false;
+    try {
+        state.absoluteOrientationSensor = new AbsoluteOrientationSensor({ frequency: 60, referenceFrame: 'device' });
+        state.absoluteOrientationSensor.addEventListener('reading', () => {
+            const q = state.absoluteOrientationSensor.quaternion;
+            let heading = computeHeadingFromQuaternion(q);
+            if (!state.useTrueNorth) heading = (heading - state.magneticDeclination + 360) % 360;
+            state.sensorType = 'absolute-orientation';
+            handleHeadingUpdate(heading, 0, 0);
         });
+        state.absoluteOrientationSensor.addEventListener('error', (e) => {
+            console.warn('AbsoluteOrientationSensor error:', e);
+            cleanupAbsoluteOrientationSensor();
+            initDeviceOrientationAbsolute();
+        });
+        state.absoluteOrientationSensor.start();
+        return true;
+    } catch (e) { console.warn('AbsoluteOrientationSensor init failed:', e); return false; }
+}
+
+function cleanupAbsoluteOrientationSensor() {
+    if (state.absoluteOrientationSensor) {
+        try { state.absoluteOrientationSensor.stop(); } catch (e) {}
+        state.absoluteOrientationSensor = null;
+    }
+}
+
+function initDeviceOrientationAbsolute() {
+    if (!('ondeviceorientationabsolute' in window)) { initDeviceOrientation(); return; }
+    window.addEventListener('deviceorientationabsolute', handleDeviceOrientation, true);
+    state.sensorType = 'deviceorientationabsolute';
+    setSensorTimeout();
+}
+
+function initDeviceOrientation() {
+    window.addEventListener('deviceorientation', handleDeviceOrientation, true);
+    state.sensorType = 'deviceorientation';
+    setSensorTimeout();
+}
+
+function handleDeviceOrientation(event) {
+    let heading = null;
+    let beta = 0, gamma = 0;
+    if (typeof event.beta === 'number' && !isNaN(event.beta)) beta = event.beta;
+    if (typeof event.gamma === 'number' && !isNaN(event.gamma)) gamma = event.gamma;
+
+    if (typeof event.webkitCompassHeading === 'number' && !isNaN(event.webkitCompassHeading)) {
+        heading = event.webkitCompassHeading; state.sensorType = 'webkit';
+    } else if (event.absolute === true && typeof event.alpha === 'number' && !isNaN(event.alpha)) {
+        heading = event.alpha; state.sensorType = 'deviceorientationabsolute';
+    } else if (typeof event.alpha === 'number' && !isNaN(event.alpha)) {
+        heading = computeTiltCompensatedHeading(event.alpha, beta, gamma); state.sensorType = 'deviceorientation';
     }
 
-    if (document.readyState === 'complete') init();
-    else window.addEventListener('load', init);
+    if (heading === null) return;
+    if (state.useTrueNorth) heading = (heading + state.magneticDeclination) % 360;
+    handleHeadingUpdate(heading, beta, gamma);
+}
+
+function handleHeadingUpdate(heading, beta, gamma) {
+    state.rawAlpha = heading;
+    state.currentBeta = beta;
+    state.currentGamma = gamma;
+    let corrected = (heading + state.userOffset) % 360;
+    if (corrected < 0) corrected += 360;
+    const smoothed = smoothHeading(corrected);
+    state.currentAlpha = smoothed;
+
+    state.alphaHistory.push(heading);
+    if (state.alphaHistory.length > CONFIG.HISTORY_SIZE) state.alphaHistory.shift();
+    state.betaHistory.push(beta);
+    if (state.betaHistory.length > CONFIG.HISTORY_SIZE) state.betaHistory.shift();
+    state.gammaHistory.push(gamma);
+    if (state.gammaHistory.length > CONFIG.HISTORY_SIZE) state.gammaHistory.shift();
+
+    updateStability();
+    if (!state.hasOrientation) {
+        state.hasOrientation = true;
+        sensorPrompt.classList.remove('show');
+        statusBadge.textContent = '● 已连接'; statusBadge.style.color = '#4ade80';
+    }
+    updateDisplay();
+}
+
+let sensorTimeoutId = null;
+function setSensorTimeout() {
+    clearTimeout(sensorTimeoutId);
+    sensorTimeoutId = setTimeout(() => {
+        if (!state.hasOrientation) showError('传感器无响应，请确认使用 HTTPS 并检查设备支持');
+    }, CONFIG.SENSOR_TIMEOUT);
+}
+
+// ============================================================
+//  地理位置与磁偏角（WMM 离线计算）
+// ============================================================
+function getLocation() {
+    if (!navigator.geolocation) { latValue.textContent = '不支持'; lngValue.textContent = '不支持'; return; }
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const lat = pos.coords.latitude, lng = pos.coords.longitude;
+            latValue.textContent = formatCoord(lat, 'lat');
+            lngValue.textContent = formatCoord(lng, 'lng');
+            try {
+                const year = new Date().getFullYear() + (new Date().getMonth() / 12);
+                const decl = computeWMMDeclination(lat, lng, year);
+                if (!isNaN(decl)) {
+                    state.magneticDeclination = decl;
+                    declValue.textContent = (decl >= 0 ? '+' : '') + decl.toFixed(1) + '°';
+                    state.smoothedAlpha = null;
+                    updateDisplay();
+                }
+            } catch (e) { declValue.textContent = '计算失败'; }
+        },
+        () => { latValue.textContent = '--°--\'--"'; lngValue.textContent = '--°--\'--"'; declValue.textContent = '--°'; },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+}
+
+function formatCoord(value, type) {
+    const abs = Math.abs(value), deg = Math.floor(abs);
+    const min = Math.floor((abs - deg) * 60);
+    const sec = ((abs - deg - min / 60) * 3600).toFixed(1);
+    const dir = type === 'lat' ? (value >= 0 ? 'N' : 'S') : (value >= 0 ? 'E' : 'W');
+    return `${deg}°${min}'${sec}"${dir}`;
+}
+
+// ============================================================
+//  校准功能
+// ============================================================
+function setCurrentAsNorth() {
+    if (!state.hasOrientation) { alert('请等待指南针数据稳定后再操作'); return; }
+    const newOffset = (360 - state.rawAlpha) % 360;
+    state.userOffset = newOffset;
+    state.smoothedAlpha = null;
+    updateDisplay();
+    if (navigator.vibrate) navigator.vibrate(20);
+    statusBadge.textContent = '● 已校准偏移: ' + Math.round(newOffset) + '°';
+    statusBadge.style.color = '#3b82f6';
+    setTimeout(() => { if (statusBadge.textContent.includes('校准偏移')) updateStatusUI(); }, 2000);
+}
+
+function promptFigureEight() {
+    if (!state.hasOrientation) { alert('请先启动指南针'); return; }
+    state.smoothedAlpha = null; state.alphaHistory = []; state.userOffset = 0;
+    statusBadge.textContent = '🧲 请画 ∞ 字移动手机...'; statusBadge.style.color = '#facc15';
+    setTimeout(() => {
+        if (state.isStable && !state.isMagneticInterference) {
+            statusBadge.textContent = '● 校准完成'; statusBadge.style.color = '#4ade80';
+            if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+        } else if (state.isMagneticInterference) {
+            statusBadge.textContent = '● 干扰过大，请远离金属'; statusBadge.style.color = '#f87171';
+        } else {
+            statusBadge.textContent = '● 校准未完成，请保持平稳'; statusBadge.style.color = '#facc15';
+        }
+    }, 5000);
+    if (navigator.vibrate) navigator.vibrate(10);
+}
+
+function toggleTrueNorth() {
+    state.useTrueNorth = !state.useTrueNorth;
+    trueNorthBtn.textContent = state.useTrueNorth ? '🌍 真北' : '🧲 磁北';
+    trueNorthBtn.className = state.useTrueNorth ? 'btn-success' : 'btn-primary';
+    state.smoothedAlpha = null;
+    updateDisplay();
+}
+
+function showDeclinationDialog() {
+    const input = prompt(
+        '请输入当地磁偏角（度）\n东偏为正 (+)，西偏为负 (-)\n留空重新自动计算:',
+        state.magneticDeclination !== 0 ? state.magneticDeclination.toFixed(1) : ''
+    );
+    if (input === null) return;
+    if (input.trim() === '') { getLocation(); return; }
+    const val = parseFloat(input);
+    if (!isNaN(val)) {
+        state.magneticDeclination = val;
+        declValue.textContent = (val >= 0 ? '+' : '') + val.toFixed(1) + '°';
+        state.smoothedAlpha = null; updateDisplay();
+    }
+}
+
+// ============================================================
+//  启动逻辑
+// ============================================================
+async function startCompass() {
+    if (state.isSensorStarted) return;
+    state.isSensorStarted = true;
+    startBtn.disabled = true; startBtn.textContent = '检测传感器...'; errorDetail.textContent = '';
+    updateSensorList();
+
+    const hasAbsoluteSensor = 'AbsoluteOrientationSensor' in window;
+    const hasDOA = 'ondeviceorientationabsolute' in window;
+    const hasDO = 'DeviceOrientationEvent' in window;
+    if (!hasAbsoluteSensor && !hasDO && !hasDOA) { showError('设备不支持方向传感器'); return; }
+
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        try {
+            const response = await DeviceOrientationEvent.requestPermission();
+            if (response !== 'granted') {
+                showError('权限被拒绝，请在设置中允许运动与方向访问');
+                startBtn.disabled = false; startBtn.textContent = '启动指南针'; return;
+            }
+        } catch (err) { showError('权限请求失败: ' + err.message); startBtn.disabled = false; startBtn.textContent = '启动指南针'; return; }
+    }
+
+    if (!initAbsoluteOrientationSensor()) {
+        if (hasDOA) initDeviceOrientationAbsolute();
+        else initDeviceOrientation();
+    }
+    getLocation();
+    updateScreenOrientation();
+    window.addEventListener('orientationchange', () => setTimeout(updateScreenOrientation, 100));
+    if (screen.orientation) screen.orientation.addEventListener('change', updateScreenOrientation);
+
+    promptTitle.textContent = '等待数据...';
+    promptDesc.textContent = '请平放手机并缓慢旋转';
+    startBtn.style.display = 'none';
+}
+
+function updateScreenOrientation() {
+    state.screenOrientation = screen.orientation ? screen.orientation.angle : (window.orientation || 0);
+}
+
+function updateSensorList() {
+    const items = [
+        { name: 'AbsoluteOrientationSensor', avail: 'AbsoluteOrientationSensor' in window },
+        { name: 'deviceorientationabsolute', avail: 'ondeviceorientationabsolute' in window },
+        { name: 'deviceorientation', avail: 'DeviceOrientationEvent' in window },
+        { name: 'Geolocation', avail: 'geolocation' in navigator },
+    ];
+    sensorList.innerHTML = items.map(i => `<li class="${i.avail ? 'available' : 'unavailable'}">${i.name}</li>`).join('');
+}
+
+function showError(msg) {
+    errorDetail.textContent = msg; promptTitle.textContent = '启动失败';
+    startBtn.textContent = '重试'; startBtn.disabled = false; startBtn.style.display = 'inline-block';
+    startBtn.onclick = () => {
+        errorDetail.textContent = ''; promptTitle.textContent = '启动指南针';
+        promptDesc.textContent = '点击下方按钮，允许设备使用陀螺仪和磁力计';
+        startBtn.textContent = '启动指南针'; startBtn.onclick = startCompass;
+        state.isSensorStarted = false; startCompass();
+    };
+}
+
+// ============================================================
+//  初始化
+// ============================================================
+function init() {
+    resizeCanvas(); drawCompass(0); sensorPrompt.classList.add('show');
+    startBtn.onclick = startCompass;
+    calibrateBtn.onclick = promptFigureEight;
+    setNorthBtn.onclick = setCurrentAsNorth;
+    trueNorthBtn.onclick = toggleTrueNorth;
+
+    const declItem = document.getElementById('declItem');
+    declItem.style.pointerEvents = 'auto'; declItem.style.cursor = 'pointer';
+    let pressTimer;
+    declItem.addEventListener('touchstart', () => { pressTimer = setTimeout(showDeclinationDialog, 600); });
+    declItem.addEventListener('touchend', () => clearTimeout(pressTimer));
+    declItem.addEventListener('mousedown', () => { pressTimer = setTimeout(showDeclinationDialog, 600); });
+    declItem.addEventListener('mouseup', () => clearTimeout(pressTimer));
+    declItem.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 300));
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) { getLocation(); state.smoothedAlpha = null; }
+    });
+}
+
+if (document.readyState === 'complete') init();
+else window.addEventListener('load', init);
 </script>
 
 <script>
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').then(reg => {
-            console.log('Service Worker 注册成功，作用域:', reg.scope);
-        }).catch(err => {
-            console.error('Service Worker 注册失败:', err);
-        });
-    }
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+        console.log('Service Worker 注册成功，作用域:', reg.scope);
+    }).catch(err => {
+        console.error('Service Worker 注册失败:', err);
+    });
+}
 </script>
 </body>
 </html>
