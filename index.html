@@ -340,7 +340,7 @@
     }
 
     // ============================================================
-    //  绘制罗盘 (核心绘图) —— 修复版
+    //  绘制罗盘 (核心绘图) —— 传统模式：刻度盘固定，指针旋转
     // ============================================================
     function drawCompass(alpha) {
         const size = canvasSize;
@@ -350,7 +350,7 @@
             radius = size / 2 - 6;
         ctx.clearRect(0, 0, size, size);
 
-        // ---------- 外圈光晕 (不旋转) ----------
+        // ---------- 外圈光晕 (固定) ----------
         const grad = ctx.createRadialGradient(cx, cy, radius * 0.92, cx, cy, radius);
         grad.addColorStop(0, 'rgba(30, 30, 60, 0)');
         grad.addColorStop(0.85, 'rgba(30, 30, 60, 0.1)');
@@ -365,11 +365,7 @@
         ctx.lineWidth = 1.5;
         ctx.stroke();
 
-        // ---------- 绘制刻度盘 (旋转使 N 指向地理北) ----------
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(-alpha * Math.PI / 180); // 逆时针旋转 alpha 度，使 N 指向北方
-
+        // ---------- 刻度盘 (固定，不旋转) ----------
         // 刻度
         for (let i = 0; i < 360; i++) {
             const angleRad = (i - 90) * Math.PI / 180;
@@ -385,10 +381,10 @@
                 color = 'rgba(255,255,255,0.2)'; }
             const startR = radius - tickLen,
                 endR = radius;
-            const x1 = startR * Math.cos(angleRad),
-                y1 = startR * Math.sin(angleRad);
-            const x2 = endR * Math.cos(angleRad),
-                y2 = endR * Math.sin(angleRad);
+            const x1 = cx + startR * Math.cos(angleRad),
+                y1 = cy + startR * Math.sin(angleRad);
+            const x2 = cx + endR * Math.cos(angleRad),
+                y2 = cy + endR * Math.sin(angleRad);
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
@@ -397,7 +393,7 @@
             ctx.stroke();
         }
 
-        // 主方向字母
+        // 主方向字母 (固定)
         const dirs = [
             { label: 'N', angle: 0, color: '#ff3b3b' },
             { label: 'E', angle: 90, color: 'rgba(255,255,255,0.7)' },
@@ -410,8 +406,8 @@
         dirs.forEach(d => {
             const rad = (d.angle - 90) * Math.PI / 180;
             const r = radius * 0.78;
-            const x = r * Math.cos(rad),
-                y = r * Math.sin(rad);
+            const x = cx + r * Math.cos(rad),
+                y = cy + r * Math.sin(rad);
             ctx.font = `600 ${fontSize}px -apple-system, "Helvetica Neue", sans-serif`;
             ctx.fillStyle = d.color;
             ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -420,7 +416,7 @@
             ctx.shadowBlur = 0;
         });
 
-        // 次要方向
+        // 次要方向 (固定)
         const subDirs = [{ label: 'NE', angle: 45 }, { label: 'SE', angle: 135 }, { label: 'SW', angle: 225 }, { label: 'NW',
                 angle: 315 }];
         const subFontSize = radius * 0.075;
@@ -429,28 +425,28 @@
         subDirs.forEach(d => {
             const rad = (d.angle - 90) * Math.PI / 180;
             const r = radius * 0.88;
-            ctx.fillText(d.label, r * Math.cos(rad), r * Math.sin(rad) + 1);
+            ctx.fillText(d.label, cx + r * Math.cos(rad), cy + r * Math.sin(rad) + 1);
         });
 
-        // 内圈装饰
+        // 内圈装饰 (固定)
         ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.65, 0, Math.PI * 2);
+        ctx.arc(cx, cy, radius * 0.65, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255,255,255,0.04)';
         ctx.lineWidth = 1;
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(0, 0, radius * 0.42, 0, Math.PI * 2);
+        ctx.arc(cx, cy, radius * 0.42, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255,255,255,0.03)';
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        ctx.restore(); // 恢复坐标系
-
-        // ---------- 绘制固定指针 (始终指向设备顶部，即画布上方) ----------
+        // ---------- 红色指针 (旋转 alpha 度) ----------
+        // 指针默认指向上方（即设备顶部），旋转 alpha 度表示当前航向
         const pointerLen = radius * 0.35;
         const pointerBase = radius * 0.12;
         ctx.save();
         ctx.translate(cx, cy);
+        ctx.rotate(alpha * Math.PI / 180); // 顺时针旋转 alpha 度
         ctx.beginPath();
         ctx.moveTo(0, -pointerLen);
         ctx.lineTo(-pointerBase * 0.5, -pointerLen * 0.25);
@@ -484,6 +480,17 @@
         ctx.shadowBlur = 0;
         ctx.fill();
         ctx.restore();
+
+        // N 标记小红点 (固定)
+        const nRad = (-90) * Math.PI / 180;
+        const nR = radius - 2;
+        ctx.beginPath();
+        ctx.arc(cx + nR * Math.cos(nRad), cy + nR * Math.sin(nRad), 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 59, 59, 0.6)';
+        ctx.shadowColor = 'rgba(255, 59, 59, 0.3)';
+        ctx.shadowBlur = 15;
+        ctx.fill();
+        ctx.shadowBlur = 0;
     }
 
     // ============================================================
@@ -506,7 +513,7 @@
         }
         const displayAlpha = smoothedAlpha;
 
-        // 绘制罗盘：传入 displayAlpha（方位角），内部会旋转刻度盘使 N 指北
+        // 绘制罗盘：传入 displayAlpha，指针会旋转，刻度盘固定
         drawCompass(displayAlpha);
 
         // 数字显示
